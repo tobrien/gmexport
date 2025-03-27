@@ -3,7 +3,7 @@ import { OAuth2Client } from 'google-auth-library';
 import { google } from 'googleapis';
 import * as path from 'path';
 import * as readline from 'readline';
-import { Config } from './config';
+import { Config } from './config.js';
 
 export const create = (config: Config) => {
 

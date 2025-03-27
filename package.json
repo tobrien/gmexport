@@ -1,34 +1,29 @@
 {
-    "name": "gmexport",
-    "version": "1.0.0",
-    "private": true,
+    "name": "@tobrien/gmexport",
+    "version": "0.0.1",
     "description": "Export GMail",
-    "main": "index.js",
+    "main": "dist/main.js",
     "type": "module",
     "bin": {
-        "export": "./src/gmail_export.ts"
+        "export": "./dist/main.js"
     },
     "scripts": {
         "build": "tsc",
-        "start": "node dist/gmail_export.js",
-        "gmail-export": "npm run build && node dist/gmail_export.js",
+        "start": "node dist/main.js",
         "dev": "tsc -w",
-        "dev:watch": "concurrently \"tsc -w\" \"nodemon --watch dist --delay 0.5 --exec \\\"node dist/index.js\\\"\"",
-        "dev:scripts": "nodemon --watch src --ext ts --exec \"yarn build\"",
         "watch": "nodemon --watch src --ext ts,json --exec \"yarn build\"",
-        "convert": "node index.js",
         "test": "jest",
         "lint": "eslint . --ext .ts",
         "lint:fix": "eslint . --ext .ts --fix",
         "clean": "rm -rf dist"
     },
     "keywords": [
-        "google-docs",
-        "markdown",
-        "converter"
+        "gmail",
+        "export",
+        "gmail-export"
     ],
-    "author": "",
-    "license": "UNLICENSED",
+    "author": "Tobin O'Brien <tobrien@discursive.com>",
+    "license": "Apache-2.0",
     "dependencies": {
         "@google-cloud/local-auth": "^3.0.1",
         "@types/commander": "^2.12.5",

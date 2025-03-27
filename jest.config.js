@@ -14,4 +14,8 @@ export default {
     },
     roots: ['<rootDir>/src/', '<rootDir>/tests/'],
     modulePaths: ['<rootDir>/src/'],
+    maxWorkers: 1,
+    workerIdleMemoryLimit: '512MB',
+    testTimeout: 30000,
+    setupFiles: ['<rootDir>/tests/setup.ts']
 }; 

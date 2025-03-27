@@ -16,6 +16,13 @@ date.setDate(date.getDate() - 31);
 export const DEFAULT_START_DATE = date.toISOString().split('T')[0];
 export const DEFAULT_END_DATE = new Date().toISOString().split('T')[0];
 
+export interface MessageFilter {
+    labels?: string[];
+    from?: string[];
+    to?: string[];
+    subject?: string[];
+}
+
 
 // Configuration type definition
 export interface Config {
@@ -34,11 +41,8 @@ export interface Config {
         scopes: string[];
     };
     filters: {
-        skip_labels: string[];
-        skip_emails: {
-            from: string[];
-            subject: string[];
-        };
+        exclude: MessageFilter;
+        include: MessageFilter;
     };
 }
 
@@ -76,11 +80,8 @@ const defaultConfig: Config = {
         scopes: DEFAULT_SCOPES
     },
     filters: {
-        skip_labels: [],
-        skip_emails: {
-            from: [],
-            subject: []
-        }
+        exclude: {},
+        include: {}
     }
 };
 

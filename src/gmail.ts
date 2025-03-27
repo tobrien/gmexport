@@ -2,19 +2,18 @@ import * as fs from 'fs';
 import { OAuth2Client } from 'google-auth-library';
 import { google } from 'googleapis';
 import * as path from 'path';
-import { Config } from './config';
+import { Config } from './config.js';
+import * as Filter from './filter.js';
 
-interface Email {
+export interface Email {
+    id: string;
     from: string;
+    to: string;
+    cc?: string;
+    bcc?: string;
     subject: string;
     date: string;
-    body: string;
-    attachments?: {
-        filename: string;
-        mimeType: string;
-        size: number;
-        data: Buffer;
-    }[];
+    labels: string[];
 }
 
 // Add this interface for label mapping
@@ -197,25 +196,7 @@ async function processMessagePart(
 
 export const create = (config: Config, auth: OAuth2Client) => {
 
-    // Add function to check if email should be skipped
-    function shouldSkipEmail(from: string, subject: string, labels: string[]): { skip: boolean; reason?: string } {
-        // Check labels
-        if (labels.some((label: string) => config.filters.skip_labels.includes(label))) {
-            return { skip: true, reason: 'Skipped label' };
-        }
-
-        // Check from patterns
-        if (config.filters.skip_emails.from.some((pattern: string) => new RegExp(pattern, 'i').test(from))) {
-            return { skip: true, reason: 'Skipped sender pattern' };
-        }
-
-        // Check subject patterns
-        if (config.filters.skip_emails.subject.some((pattern: string) => new RegExp(pattern, 'i').test(subject))) {
-            return { skip: true, reason: 'Skipped subject pattern' };
-        }
-
-        return { skip: false };
-    }
+    const filter = Filter.create(config);
 
     async function exportEmails(): Promise<void> {
         const gmail = google.gmail({ version: 'v1', auth });
@@ -238,10 +219,23 @@ export const create = (config: Config, auth: OAuth2Client) => {
 
             // Construct Gmail search query
             let query = `after:${afterDate} before:${beforeDate}`;
-            if (config.filters.skip_labels.length > 0) {
-                query += ` label:${config.filters.skip_labels.join(' OR label:')}`;
+            if (config.filters.include.labels && config.filters.include.labels.length > 0) {
+                query += ` label:${config.filters.include.labels.join(' OR label:')}`;
             }
-            console.log(`Searching for emails between ${afterDate} and ${beforeDate}${config.filters.skip_labels.length > 0 ? ` with label "${config.filters.skip_labels.join(' OR label:')}"` : ''}`);
+            if (config.filters.exclude.labels && config.filters.exclude.labels.length > 0) {
+                query += ` -label:${config.filters.exclude.labels.join(' AND -label:')}`;
+            }
+
+            console.log('\nUsing Gmail search query:');
+            console.log(`- Date range: after ${afterDate} and before ${beforeDate}`);
+            if (config.filters.include.labels && config.filters.include.labels.length > 0) {
+                console.log(`- Including labels: ${config.filters.include.labels.join(', ')}`);
+            }
+            if (config.filters.exclude.labels && config.filters.exclude.labels.length > 0) {
+                console.log(`- Excluding labels: ${config.filters.exclude.labels.join(', ')}`);
+            }
+            console.log(`\nFull query: ${query}\n`);
+
 
             const res = await gmail.users.messages.list({
                 userId: 'me',
@@ -257,17 +251,18 @@ export const create = (config: Config, auth: OAuth2Client) => {
             }
 
             for (const message of messages) {
-                const email = await gmail.users.messages.get({
+                const emailResponse = await gmail.users.messages.get({
                     userId: 'me',
                     id: message.id!,
                     format: 'full',
                 });
 
-                const headers = email.data.payload?.headers || [];
+                const emailData = emailResponse.data;
+                const headers = emailData.payload?.headers || [];
                 const from = headers.find(h => h.name === 'From')?.value || 'Unknown';
                 const to = headers.find(h => h.name === 'To')?.value || 'Unknown';
-                const cc = headers.find(h => h.name === 'Cc')?.value || 'None';
-                const bcc = headers.find(h => h.name === 'Bcc')?.value || 'None';
+                const cc = headers.find(h => h.name === 'Cc')?.value;
+                const bcc = headers.find(h => h.name === 'Bcc')?.value;
                 const subject = headers.find(h => h.name === 'Subject')?.value || 'No Subject';
                 const dateStr = headers.find(h => h.name === 'Date')?.value;
 
@@ -277,11 +272,22 @@ export const create = (config: Config, auth: OAuth2Client) => {
                 }
 
                 // Get labels for the email
-                const labels = email.data.labelIds || [];
+                const labels = emailData.labelIds || [];
                 const labelNames = labels.map(id => labelMap.get(id) || id);
 
+                const email: Email = {
+                    id: message.id!,
+                    from: from,
+                    to: to,
+                    cc: cc || undefined,
+                    bcc: bcc || undefined,
+                    subject: subject,
+                    date: dateStr,
+                    labels: labelNames
+                };
+
                 // Check if email should be skipped
-                const skipCheck = shouldSkipEmail(from, subject, labelNames);
+                const skipCheck = filter.shouldSkipEmail(email);
                 if (skipCheck.skip) {
                     filteredCount++;
                     if (process.env.DEBUG) {
@@ -295,18 +301,18 @@ export const create = (config: Config, auth: OAuth2Client) => {
                 let mimeType = 'text/plain';
                 const attachmentPaths: string[] = [];
 
-                if (email.data.payload) {
-                    if (email.data.payload.body?.data) {
+                if (emailData.payload) {
+                    if (emailData.payload.body?.data) {
                         // Direct body data
-                        body = Buffer.from(email.data.payload.body.data, 'base64').toString();
-                        mimeType = email.data.payload.mimeType || 'text/plain';
-                    } else if (email.data.payload.parts) {
+                        body = Buffer.from(emailData.payload.body.data, 'base64').toString();
+                        mimeType = emailData.payload.mimeType || 'text/plain';
+                    } else if (emailData.payload.parts) {
                         // Process all parts including attachments
                         const result = await processMessagePart(
                             gmail,
                             'me',
                             message.id!,
-                            email.data.payload,
+                            emailData.payload,
                             config.export.destination_dir,
                             date,
                             subject,
