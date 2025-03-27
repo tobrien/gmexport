@@ -1,0 +1,22 @@
+name: Run Tests
+
+on:
+  push:
+    branches: [ main, master ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run build
+      - run: npm test -- --coverage
+      - uses: codecov/codecov-action@v5
+        with:
+          slug: tobrien/gmexport
+          token: ${{ secrets.CODECOV_TOKEN }}

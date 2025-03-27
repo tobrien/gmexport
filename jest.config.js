@@ -1,21 +1,51 @@
 /** @type {import('ts-jest').JestConfigWithTsJest} */
 export default {
-    preset: 'ts-jest',
-    testEnvironment: 'node',
+    rootDir: '.',
+    collectCoverageFrom: ['src/**/*.ts'],
+    coverageDirectory: 'coverage',
+    coverageReporters: ['text', 'lcov', 'html'],
+    coverageThreshold: {
+        global: {
+            branches: 66,
+            functions: 84,
+            lines: 74,
+            statements: 75,
+        }
+    },
     extensionsToTreatAsEsm: ['.ts'],
+    maxWorkers: '50%',
     moduleDirectories: ['node_modules', 'src'],
+    moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
     moduleNameMapper: {
         '^(\\.{1,2}/.*)\\.js$': '$1',
+        '^@/(.*)$': '<rootDir>/src/$1',
+        '^@vite/(.*)$': '<rootDir>/src/$1'
     },
-    transform: {
-        '^.+\\.tsx?$': ['ts-jest', {
-            useESM: true,
-        }],
-    },
-    roots: ['<rootDir>/src/', '<rootDir>/tests/'],
     modulePaths: ['<rootDir>/src/'],
-    maxWorkers: 1,
-    workerIdleMemoryLimit: '512MB',
+    preset: 'ts-jest/presets/default-esm',
+    roots: ['<rootDir>/src/', '<rootDir>/tests/'],
+    // setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
+    silent: false,
+    testEnvironment: 'node',
+    testEnvironmentOptions: {
+        url: 'http://localhost'
+    },
     testTimeout: 30000,
-    setupFiles: ['<rootDir>/tests/setup.ts']
+    transform: {
+        '^.+\\.tsx?$': [
+            'ts-jest',
+            {
+                tsconfig: 'tsconfig.json',
+                useESM: true,
+                diagnostics: {
+                    ignoreCodes: [1343]
+                }
+            }
+        ]
+    },
+    transformIgnorePatterns: [
+        'node_modules/(?!(dayjs)/)'
+    ],
+    verbose: true,
+    workerIdleMemoryLimit: '512MB',
 }; 

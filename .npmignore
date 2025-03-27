@@ -1,0 +1,27 @@
+# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
+coverage/
+exports/
+node_modules/
+tests/
+.DS_Store
+.eslintrc.json
+babel.config.js
+cloudbuild.yaml
+jest.config.ts
+tsconfig.json
+yarn.lock
+.yarnrc.yml
+.npmignore
+.gitignore
+.github/
+.vscode/
+.yarn/
+src/
+.eslintrc
+.prettierrc
+jest.config.js
+tsconfig.json
+*.log
+.env
+.env.*
+README.md

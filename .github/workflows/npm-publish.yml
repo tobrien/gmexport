@@ -14,9 +14,16 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
       - run: npm ci
-      - run: npm test
+      - run: npm run lint
+      - run: npm run build
+      - run: npm test -- --coverage
+      - uses: codecov/codecov-action@v5
+        with:
+          slug: tobrien/gmexport
+          token: ${{ secrets.CODECOV_TOKEN }}
+
 
   publish-npm:
     needs: build
@@ -25,9 +32,9 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           registry-url: https://registry.npmjs.org/
       - run: npm ci
-      - run: npm publish
+      - run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{secrets.npm_token}}
