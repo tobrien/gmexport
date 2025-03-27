@@ -1,0 +1,64 @@
+{
+    "name": "gmexport",
+    "version": "1.0.0",
+    "private": true,
+    "description": "Export GMail",
+    "main": "index.js",
+    "type": "module",
+    "bin": {
+        "export": "./src/gmail_export.ts"
+    },
+    "scripts": {
+        "build": "tsc",
+        "start": "node dist/gmail_export.js",
+        "gmail-export": "npm run build && node dist/gmail_export.js",
+        "dev": "tsc -w",
+        "dev:watch": "concurrently \"tsc -w\" \"nodemon --watch dist --delay 0.5 --exec \\\"node dist/index.js\\\"\"",
+        "dev:scripts": "nodemon --watch src --ext ts --exec \"yarn build\"",
+        "watch": "nodemon --watch src --ext ts,json --exec \"yarn build\"",
+        "convert": "node index.js",
+        "test": "jest",
+        "lint": "eslint . --ext .ts",
+        "lint:fix": "eslint . --ext .ts --fix",
+        "clean": "rm -rf dist"
+    },
+    "keywords": [
+        "google-docs",
+        "markdown",
+        "converter"
+    ],
+    "author": "",
+    "license": "UNLICENSED",
+    "dependencies": {
+        "@google-cloud/local-auth": "^3.0.1",
+        "@types/commander": "^2.12.5",
+        "@types/yaml": "^1.9.7",
+        "commander": "^13.1.0",
+        "dotenv": "^16.4.7",
+        "express": "^4.21.2",
+        "glob": "^11.0.1",
+        "google-auth-library": "^9.6.3",
+        "googleapis": "^128.0.0",
+        "js-yaml": "^4.1.0",
+        "luxon": "^3.5.0",
+        "turndown": "^7.1.2",
+        "winston": "^3.17.0",
+        "yaml": "^2.7.0"
+    },
+    "devDependencies": {
+        "@types/jest": "^29.5.14",
+        "@types/js-yaml": "^4.0.9",
+        "@types/luxon": "^3.4.2",
+        "@types/node": "^20.11.19",
+        "@types/turndown": "^5.0.5",
+        "@typescript-eslint/eslint-plugin": "^7.3.1",
+        "@typescript-eslint/parser": "^7.3.1",
+        "concurrently": "^9.1.2",
+        "eslint": "^8.57.0",
+        "jest": "^29.7.0",
+        "nodemon": "^3.1.9",
+        "ts-jest": "^29.2.6",
+        "typescript": "^5.3.3"
+    },
+    "packageManager": "yarn@4.7.0"
+}

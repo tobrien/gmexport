@@ -1,0 +1,14 @@
+{
+    "verbose": true,
+    "ignore": [
+        ".git",
+        "node_modules/**/node_modules",
+        "dist",
+        "*.test.ts"
+    ],
+    "watch": [
+        "src"
+    ],
+    "ext": "ts,json",
+    "exec": "tsc && echo \"⚡ Compilation complete\""
+}
