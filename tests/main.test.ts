@@ -1,9 +1,10 @@
 import { jest } from '@jest/globals';
 import { Command } from 'commander';
+import dayjs from 'dayjs';
 import * as Auth from '../src/auth';
 import * as Config from '../src/config';
 import * as Gmail from '../src/gmail';
-import { main } from '../src/main';
+import { calculateDateRange, CommandLineArgs, main } from '../src/main';
 
 // Mock all dependencies
 jest.mock('commander', () => {
@@ -139,7 +140,7 @@ describe('main', () => {
 
         await main();
 
-        expect(consoleErrorSpy).toHaveBeenCalledWith('Invalid date format. Please use YYYY-MM-DD');
+        expect(consoleErrorSpy).toHaveBeenCalledWith('Invalid start date format. Please use YYYY-MM-DD');
         expect(processExitSpy).toHaveBeenCalledWith(1);
     });
 
@@ -158,4 +159,84 @@ describe('main', () => {
         expect(consoleErrorSpy).toHaveBeenCalledWith('End date must be after start date');
         expect(processExitSpy).toHaveBeenCalledWith(1);
     });
+
+    it('should exit with error when --current-month is used with --start', async () => {
+        mockCommandInstance.opts.mockReturnValue({
+            config: 'test-config.yaml',
+            output: './test-output',
+            start: '2024-01-01',
+            currentMonth: true,
+            dryRun: false
+        });
+
+        await main();
+
+        expect(consoleErrorSpy).toHaveBeenCalledWith('Error: --current-month cannot be used together with --start or --end options');
+        expect(processExitSpy).toHaveBeenCalledWith(1);
+    });
+
+    it('should exit with error when --current-month is used with --end', async () => {
+        mockCommandInstance.opts.mockReturnValue({
+            config: 'test-config.yaml',
+            output: './test-output',
+            end: '2024-01-31T00:00:00.000Z',
+            currentMonth: true,
+            dryRun: false
+        });
+
+        await main();
+
+        expect(consoleErrorSpy).toHaveBeenCalledWith('Error: --current-month cannot be used together with --start or --end options');
+        expect(processExitSpy).toHaveBeenCalledWith(1);
+    });
+
+    describe('calculateDateRange', () => {
+        beforeEach(() => {
+            // Mock current date to 2024-03-15 for consistent testing
+            jest.useFakeTimers();
+            jest.setSystemTime(new Date('2024-03-15T00:00:00.000Z'));
+        });
+
+        afterEach(() => {
+            jest.useRealTimers();
+        });
+
+        it('should return start and end dates when explicitly provided', () => {
+            const options = {
+                start: '2024-01-01',
+                end: '2024-01-31',
+                currentMonth: false
+            };
+
+            const range = calculateDateRange(options as CommandLineArgs);
+
+            expect(range.start.format()).toBe(dayjs('2024-01-01').format());
+            expect(range.end.format()).toBe(dayjs('2024-01-31').format());
+        });
+
+        it('should calculate current month range when --current-month is used', () => {
+            const options = {
+                currentMonth: true
+            };
+
+            const range = calculateDateRange(options as CommandLineArgs);
+
+            // For mocked date 2024-03-15, should return full March range
+            expect(range.start.format()).toBe(dayjs('2024-03-01').format());
+            expect(range.end.format()).toBe(dayjs('2024-03-15T00:00:00.000Z').format());
+        });
+
+        it('should use end date as today when only start date provided', () => {
+            const options = {
+                start: '2024-03-01',
+                currentMonth: false
+            };
+
+            const range = calculateDateRange(options as CommandLineArgs);
+
+            expect(range.start.format()).toBe(dayjs('2024-03-01').format());
+            expect(range.end.format()).toBe(dayjs('2024-03-15T00:00:00.000Z').format()); // Mocked current date
+        });
+    });
+
 });

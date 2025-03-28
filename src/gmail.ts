@@ -2,8 +2,10 @@ import * as fs from 'fs';
 import { OAuth2Client } from 'google-auth-library';
 import { google } from 'googleapis';
 import * as path from 'path';
+import dayjs from 'dayjs';
 import { Config } from './config.js';
 import * as Filter from './filter.js';
+import { DateRange } from './main.js';
 
 export interface Email {
     id: string;
@@ -34,12 +36,12 @@ function ensureDirectoryExists(dirPath: string): void {
     }
 }
 
-function getEmailFilePath(baseDir: string, date: Date, subject: string, extension: string = '.txt'): string {
-    const year = date.getFullYear();
-    const month = date.getMonth() + 1; // getMonth() returns 0-11
-    const day = date.getDate();
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
+function getEmailFilePath(baseDir: string, date: dayjs.Dayjs, subject: string, extension: string = '.txt'): string {
+    const year = date.year();
+    const month = date.month() + 1; // getMonth() returns 0-11
+    const day = date.date();
+    const hours = date.hour().toString().padStart(2, '0');
+    const minutes = date.minute().toString().padStart(2, '0');
 
     const sanitizedSubject = sanitizeFilename(subject);
     const filename = `${day}-${hours}${minutes}-${sanitizedSubject}${extension}`;
@@ -50,20 +52,16 @@ function getEmailFilePath(baseDir: string, date: Date, subject: string, extensio
     return path.join(dirPath, filename);
 }
 
-function formatDateForGmailQuery(date: Date): string {
-    // Format date as YYYY/MM/DD
-    const year = date.getFullYear();
-    const month = (date.getMonth() + 1).toString().padStart(2, '0');
-    const day = date.getDate().toString().padStart(2, '0');
-    return `${year}/${month}/${day}`;
+function formatDateForGmailQuery(date: dayjs.Dayjs): string {
+    return date.format('YYYY/MM/DD');
 }
 
-function getAttachmentFilePath(baseDir: string, date: Date, subject: string, attachmentName: string): string {
-    const year = date.getFullYear();
-    const month = date.getMonth() + 1; // getMonth() returns 0-11
-    const day = date.getDate();
-    const hours = date.getHours().toString().padStart(2, '0');
-    const minutes = date.getMinutes().toString().padStart(2, '0');
+function getAttachmentFilePath(baseDir: string, date: dayjs.Dayjs, subject: string, attachmentName: string): string {
+    const year = date.year();
+    const month = date.month() + 1; // getMonth() returns 0-11
+    const day = date.date();
+    const hours = date.hour().toString().padStart(2, '0');
+    const minutes = date.minute().toString().padStart(2, '0');
 
     // Get the file extension from the attachment name
     const attachmentExt = path.extname(attachmentName);
@@ -109,7 +107,7 @@ async function saveAttachment(
     attachmentId: string,
     filename: string,
     destinationDir: string,
-    date: Date,
+    date: dayjs.Dayjs,
     subject: string,
     dryRun: boolean
 ): Promise<string> {
@@ -134,7 +132,7 @@ async function processMessagePart(
     messageId: string,
     part: any,
     destinationDir: string,
-    date: Date,
+    date: dayjs.Dayjs,
     subject: string,
     dryRun: boolean
 ): Promise<{ body?: string, mimeType?: string, attachments: string[] }> {
@@ -198,7 +196,7 @@ export const create = (config: Config, auth: OAuth2Client) => {
 
     const filter = Filter.create(config);
 
-    async function exportEmails(): Promise<void> {
+    async function exportEmails(dateRange: DateRange): Promise<void> {
         const gmail = google.gmail({ version: 'v1', auth });
         let processedCount = 0;
         let skippedCount = 0;
@@ -211,10 +209,9 @@ export const create = (config: Config, auth: OAuth2Client) => {
             const labelMap = await getAllLabels(gmail);
 
             // Format dates for Gmail query
-            const afterDate = formatDateForGmailQuery(new Date(config.export.start_date));
+            const afterDate = formatDateForGmailQuery(dateRange.start);
             // Add one day to end date to make the range inclusive
-            const adjustedEndDate = new Date(config.export.end_date);
-            adjustedEndDate.setDate(adjustedEndDate.getDate() + 1);
+            const adjustedEndDate = dateRange.end.add(1, 'day');
             const beforeDate = formatDateForGmailQuery(adjustedEndDate);
 
             // Construct Gmail search query
@@ -296,7 +293,7 @@ export const create = (config: Config, auth: OAuth2Client) => {
                     continue;
                 }
 
-                const date = new Date(dateStr);
+                const date = dayjs(dateStr);
                 let body = '';
                 let mimeType = 'text/plain';
                 const attachmentPaths: string[] = [];

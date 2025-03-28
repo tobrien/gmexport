@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { Command } from 'commander';
+import dayjs from 'dayjs';
 import * as Auth from './auth.js';
 import * as Config from './config.js';
 import * as Gmail from './gmail.js';
@@ -7,9 +8,22 @@ import * as Gmail from './gmail.js';
 export interface CommandLineArgs {
     config: string;
     output: string;
-    start: string;
-    end: string;
+    start?: string;
+    end?: string;
+    currentMonth?: boolean;
     dryRun: boolean;
+}
+
+export const DEFAULT_CONFIG_FILE = './config.yaml';
+export const DEFAULT_OUTPUT_DIR = './exports';
+
+// Get date 31 days ago in YYYY-MM-DD format
+export const DEFAULT_START_DATE = dayjs().subtract(31, 'day').format('YYYY-MM-DD');
+export const DEFAULT_END_DATE = dayjs().format('YYYY-MM-DD');
+
+export interface DateRange {
+    start: dayjs.Dayjs;
+    end: dayjs.Dayjs;
 }
 
 export async function main() {
@@ -18,10 +32,11 @@ export async function main() {
     program
         .name('gmail-export')
         .description('Export Gmail messages within a date range to local files')
-        .option('-c, --config <path>', 'Path to configuration file', Config.DEFAULT_CONFIG_FILE)
-        .option('-o, --output <path>', 'destination directory for exported emails', Config.DEFAULT_DESTINATION_DIR)
-        .requiredOption('-s, --start <date>', 'start date (YYYY-MM-DD)')
-        .requiredOption('-e, --end <date>', 'end date (YYYY-MM-DD)')
+        .option('-c, --config <path>', 'Path to configuration file', DEFAULT_CONFIG_FILE)
+        .option('-o, --output <path>', 'destination directory for exported emails', DEFAULT_OUTPUT_DIR)
+        .option('-s, --start <date>', 'start date (YYYY-MM-DD). If omitted, defaults to 31 days before end date')
+        .option('-e, --end <date>', 'end date (YYYY-MM-DD). If omitted, defaults to current date')
+        .option('--current-month', 'export emails from the first day of the current month to today')
         .option('--dry-run', 'perform a dry run without saving files', false)
         .version('1.0.0');
 
@@ -29,24 +44,17 @@ export async function main() {
 
     const options: CommandLineArgs = program.opts();
     const destinationDir = options.output;
-    const startDateStr = options.start;
-    const endDateStr = options.end;
+
+    // Validate that --current-month is not used with other date options
+    if (options.currentMonth && (options.start || options.end)) {
+        console.error('Error: --current-month cannot be used together with --start or --end options');
+        process.exit(1);
+    }
 
     try {
-        const startDate = new Date(startDateStr);
-        const endDate = new Date(endDateStr);
+        const dateRange = calculateDateRange(options);
 
-        if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
-            console.error('Invalid date format. Please use YYYY-MM-DD');
-            process.exit(1);
-        }
-
-        if (endDate < startDate) {
-            console.error('End date must be after start date');
-            process.exit(1);
-        }
-
-        logExportConfiguration(options, destinationDir, startDateStr, endDateStr);
+        logExportConfiguration(options, destinationDir, dateRange);
 
         const config = Config.createConfig(options);
 
@@ -56,7 +64,7 @@ export async function main() {
         const auth = await Auth.create(config).authorize();
 
         const gmail = Gmail.create(config, auth);
-        await gmail.exportEmails();
+        await gmail.exportEmails(dateRange);
 
     } catch (error) {
         console.error('Error:', error);
@@ -64,12 +72,56 @@ export async function main() {
     }
 }
 
-function logExportConfiguration(options: CommandLineArgs, destinationDir: string, startDateStr: string, endDateStr: string) {
+export function calculateDateRange(options: CommandLineArgs): DateRange {
+    let startDate: dayjs.Dayjs;
+    let endDate: dayjs.Dayjs;
+
+    if (options.currentMonth) {
+        const today = dayjs();
+        startDate = today.startOf('month');
+        endDate = today;
+    } else {
+
+        // Handle end date
+        if (options.end) {
+            endDate = dayjs(options.end);
+            if (!endDate.isValid()) {
+                console.error('Invalid end date format. Please use YYYY-MM-DD');
+                process.exit(1);
+            }
+        } else {
+            endDate = dayjs();
+        }
+
+        // Handle start date
+        if (options.start) {
+            startDate = dayjs(options.start);
+            if (!startDate.isValid()) {
+                console.error('Invalid start date format. Please use YYYY-MM-DD');
+                process.exit(1);
+            }
+        } else {
+            startDate = endDate.subtract(31, 'day');
+        }
+    }
+
+    if (endDate.isBefore(startDate)) {
+        console.error('End date must be after start date');
+        process.exit(1);
+    }
+
+    return {
+        start: startDate,
+        end: endDate
+    };
+}
+
+function logExportConfiguration(options: CommandLineArgs, destinationDir: string, dateRange: DateRange) {
     console.log('\nExport Configuration:');
     console.log('---------------------');
     console.log(`Config file: ${options.config}`);
     console.log(`Output directory: ${destinationDir}`);
-    console.log(`Date range: ${startDateStr} to ${endDateStr}`);
+    console.log(`Date range: ${dateRange.start.format('YYYY-MM-DD')} to ${dateRange.end.format('YYYY-MM-DD')}`);
     console.log('---------------------\n');
 }
 
@@ -82,7 +134,6 @@ function logDetailedConfiguration(config: Config.Config) {
     console.log('\nExport Settings:');
     console.log(`  Max results: ${config.export.max_results}`);
     console.log(`  Destination: ${config.export.destination_dir}`);
-    console.log(`  Date range: ${config.export.start_date} to ${config.export.end_date}`);
     console.log('\nFilters:');
     console.log('  Include Labels:');
     if (config.filters.include?.labels?.length) {
