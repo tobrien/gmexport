@@ -1,7 +1,9 @@
 import { Config } from "./config.js";
 import { Email } from "./gmail.js";
+import { getLogger } from './logging.js';
 
 export const create = (config: Config) => {
+    const logger = getLogger();
 
     function checkInclusiveFilters(email: Email): { skip: boolean; reason?: string } | null {
         // Check if any inclusive filters are defined

@@ -4,8 +4,10 @@ import { google } from 'googleapis';
 import * as path from 'path';
 import * as readline from 'readline';
 import { Config } from './config.js';
+import { getLogger } from './logging.js';
 
 export const create = (config: Config) => {
+    const logger = getLogger();
 
     async function authorize(): Promise<OAuth2Client> {
         const credentials = JSON.parse(fs.readFileSync(path.join(config.credentials.credentials_file), 'utf-8'));
@@ -32,7 +34,7 @@ export const create = (config: Config) => {
             scope: config.api.scopes,
         });
 
-        console.log('Authorize this app by visiting this url:', authUrl);
+        logger.info('Please authorize this app by visiting this URL:', { authUrl });
 
         const code = await new Promise<string>((resolve) => {
             const rl = readline.createInterface({
