@@ -5,7 +5,7 @@
     "main": "dist/main.js",
     "type": "module",
     "bin": {
-        "export": "./dist/main.js"
+        "gmexport": "./dist/main.js"
     },
     "scripts": {
         "build": "tsc",
@@ -15,7 +15,8 @@
         "test": "jest",
         "lint": "eslint . --ext .ts",
         "lint:fix": "eslint . --ext .ts --fix",
-        "clean": "rm -rf dist"
+        "clean": "rm -rf dist",
+        "prepublishOnly": "npm run clean && npm run build"
     },
     "keywords": [
         "gmail",
