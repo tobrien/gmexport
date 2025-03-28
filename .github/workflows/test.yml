@@ -17,8 +17,5 @@ jobs:
       - run: npm test -- --coverage
       - uses: codecov/codecov-action@v5
         with:
-          file: coverage/lcov.info
           slug: tobrien/gmexport
           token: ${{ secrets.CODECOV_TOKEN }}
-          branch: ${{ github.ref }}
-          commit: ${{ github.sha }}
