@@ -2,6 +2,17 @@ import { jest } from '@jest/globals';
 import * as fs from 'fs';
 import * as yaml from 'js-yaml';
 import { createConfig } from '../src/config';
+import { getLogger } from '../src/logging';
+
+// Mock the logging module
+jest.mock('../src/logging', () => ({
+    getLogger: jest.fn().mockReturnValue({
+        info: jest.fn(),
+        error: jest.fn(),
+        warn: jest.fn(),
+        debug: jest.fn()
+    })
+}));
 
 jest.mock('fs');
 jest.mock('js-yaml');
@@ -36,8 +47,19 @@ describe('createConfig', () => {
         }
     };
 
+    let mockLogger: any;
+
     beforeEach(() => {
         jest.clearAllMocks();
+
+        // Setup mock logger
+        mockLogger = {
+            info: jest.fn(),
+            error: jest.fn(),
+            warn: jest.fn(),
+            debug: jest.fn()
+        };
+        (getLogger as jest.Mock).mockReturnValue(mockLogger);
     });
 
     it('should use command line arguments for export settings', () => {
@@ -84,12 +106,14 @@ describe('createConfig', () => {
         expect(config.filters.exclude.from).toEqual(["spam@example.com"]);
         expect(config.filters.exclude.subject).toEqual(["spam subject"]);
         expect(config.filters.exclude.to).toEqual(["test@example.com"]);
+
+        // Verify warning was logged
+        expect(mockLogger.warn).toHaveBeenCalledWith(
+            expect.stringContaining('Configuration file not found at')
+        );
     });
 
     it('should handle invalid config file content', () => {
-        const consoleSpy = jest.spyOn(console, 'error').mockImplementation(() => { });
-        const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => { });
-
         (fs.existsSync as jest.Mock).mockReturnValue(true);
         (fs.readFileSync as jest.Mock).mockReturnValue('invalid: yaml: content');
         (yaml.load as jest.Mock).mockImplementation(() => {
@@ -98,14 +122,14 @@ describe('createConfig', () => {
 
         const config = createConfig(mockArgs);
 
-        expect(consoleSpy).toHaveBeenCalledWith(
+        // Verify error was logged
+        expect(mockLogger.error).toHaveBeenCalledWith(
             'Error loading configuration from config.yaml:',
-            expect.any(Error)
+            { error: expect.any(Error) }
         );
-        expect(warnSpy).toHaveBeenCalledWith('Using default configuration.');
-        expect(config.credentials.credentials_file).toBe('custom-creds.json');
+        expect(mockLogger.warn).toHaveBeenCalledWith('Using default configuration.');
 
-        consoleSpy.mockRestore();
-        warnSpy.mockRestore();
+        // Verify default config was used
+        expect(config.credentials.credentials_file).toBe('custom-creds.json');
     });
 });

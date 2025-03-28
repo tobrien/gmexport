@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as yaml from 'js-yaml';
 import { CommandLineArgs } from './main';
+import { getLogger } from './logging.js';
 
 // Internal default configuration values
 export const DEFAULT_CREDENTIALS_FILE = './credentials.json';
@@ -77,7 +78,7 @@ const defaultConfig: Config = {
 };
 
 export function createConfig(args: CommandLineArgs): Config {
-
+    const logger = getLogger();
     let config = defaultConfig;
 
     config.export.destination_dir = args.output;
@@ -93,11 +94,11 @@ export function createConfig(args: CommandLineArgs): Config {
                 config = deepMerge(defaultConfig, fileConfig);
             }
         } catch (error) {
-            console.error('Error loading configuration from config.yaml:', error);
-            console.warn('Using default configuration.');
+            logger.error('Error loading configuration from config.yaml:', { error });
+            logger.warn('Using default configuration.');
         }
     } else {
-        console.warn(`Configuration file not found at ${configFilePath}. Using default configuration.`);
+        logger.warn(`Configuration file not found at ${configFilePath}. Using default configuration.`);
     }
 
     return config;

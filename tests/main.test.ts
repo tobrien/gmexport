@@ -5,6 +5,18 @@ import * as Auth from '../src/auth';
 import * as Config from '../src/config';
 import * as Gmail from '../src/gmail';
 import { calculateDateRange, CommandLineArgs, main } from '../src/main';
+import { getLogger, setLogLevel } from '../src/logging';
+
+// Mock the logging module
+jest.mock('../src/logging', () => ({
+    getLogger: jest.fn().mockReturnValue({
+        info: jest.fn(),
+        error: jest.fn(),
+        warn: jest.fn(),
+        debug: jest.fn()
+    }),
+    setLogLevel: jest.fn()
+}));
 
 // Mock all dependencies
 jest.mock('commander', () => {
@@ -43,10 +55,9 @@ describe('main', () => {
     let mockAuth: any;
     let mockGmail: any;
     let mockConfig: any;
-    let consoleErrorSpy: any;
     let processExitSpy: any;
-    let consoleLogSpy: any;
     let mockCommandInstance: any;
+    let mockLogger: any;
 
     beforeEach(() => {
         // Get the mock Command instance
@@ -102,16 +113,21 @@ describe('main', () => {
         };
         (Config.createConfig as jest.Mock).mockReturnValue(mockConfig);
 
-        // Spy on console and process.exit
-        consoleErrorSpy = jest.spyOn(console, 'error').mockImplementation(() => { });
-        consoleLogSpy = jest.spyOn(console, 'log').mockImplementation(() => { });
+        // Mock logger
+        mockLogger = {
+            info: jest.fn(),
+            error: jest.fn(),
+            warn: jest.fn(),
+            debug: jest.fn()
+        };
+        (getLogger as jest.Mock).mockReturnValue(mockLogger);
+
+        // Spy on process.exit
         processExitSpy = jest.spyOn(process, 'exit').mockImplementation(() => undefined as never);
     });
 
     afterEach(() => {
         jest.clearAllMocks();
-        consoleErrorSpy.mockRestore();
-        consoleLogSpy.mockRestore();
         processExitSpy.mockRestore();
     });
 
@@ -140,7 +156,7 @@ describe('main', () => {
 
         await main();
 
-        expect(consoleErrorSpy).toHaveBeenCalledWith('Invalid start date format. Please use YYYY-MM-DD');
+        expect(mockLogger.error).toHaveBeenCalledWith('Invalid start date format. Please use YYYY-MM-DD');
         expect(processExitSpy).toHaveBeenCalledWith(1);
     });
 
@@ -156,7 +172,7 @@ describe('main', () => {
 
         await main();
 
-        expect(consoleErrorSpy).toHaveBeenCalledWith('End date must be after start date');
+        expect(mockLogger.error).toHaveBeenCalledWith('End date must be after start date');
         expect(processExitSpy).toHaveBeenCalledWith(1);
     });
 
@@ -171,7 +187,7 @@ describe('main', () => {
 
         await main();
 
-        expect(consoleErrorSpy).toHaveBeenCalledWith('Error: --current-month cannot be used together with --start or --end options');
+        expect(mockLogger.error).toHaveBeenCalledWith('--current-month cannot be used together with --start or --end options');
         expect(processExitSpy).toHaveBeenCalledWith(1);
     });
 
@@ -186,8 +202,23 @@ describe('main', () => {
 
         await main();
 
-        expect(consoleErrorSpy).toHaveBeenCalledWith('Error: --current-month cannot be used together with --start or --end options');
+        expect(mockLogger.error).toHaveBeenCalledWith('--current-month cannot be used together with --start or --end options');
         expect(processExitSpy).toHaveBeenCalledWith(1);
+    });
+
+    it('should set debug level when verbose flag is used', async () => {
+        mockCommandInstance.opts.mockReturnValue({
+            config: 'test-config.yaml',
+            output: './test-output',
+            start: '2024-01-01',
+            end: '2024-01-31',
+            dryRun: false,
+            verbose: true
+        });
+
+        await main();
+
+        expect(setLogLevel).toHaveBeenCalledWith('debug');
     });
 
     describe('calculateDateRange', () => {
@@ -238,5 +269,4 @@ describe('main', () => {
             expect(range.end.format()).toBe(dayjs('2024-03-15T00:00:00.000Z').format()); // Mocked current date
         });
     });
-
 });

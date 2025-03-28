@@ -6,6 +6,7 @@ import dayjs from 'dayjs';
 import { Config } from './config.js';
 import * as Filter from './filter.js';
 import { DateRange } from './main.js';
+import { getLogger } from './logging.js';
 
 export interface Email {
     id: string;
@@ -82,6 +83,7 @@ function getAttachmentFilePath(baseDir: string, date: dayjs.Dayjs, subject: stri
 
 // Add this function to get all labels
 async function getAllLabels(gmail: any): Promise<Map<string, string>> {
+    const logger = getLogger();
     const labelMap = new Map<string, string>();
     try {
         const response = await gmail.users.labels.list({
@@ -92,9 +94,9 @@ async function getAllLabels(gmail: any): Promise<Map<string, string>> {
         for (const label of labels) {
             labelMap.set(label.id, label.name);
         }
-        console.log(`Retrieved ${labelMap.size} labels from Gmail`);
+        logger.info('Retrieved labels from Gmail', { count: labelMap.size });
     } catch (error) {
-        console.error('Error fetching labels:', error);
+        logger.error('Error fetching labels:', { error });
     }
     return labelMap;
 }
@@ -193,7 +195,7 @@ async function processMessagePart(
 }
 
 export const create = (config: Config, auth: OAuth2Client) => {
-
+    const logger = getLogger();
     const filter = Filter.create(config);
 
     async function exportEmails(dateRange: DateRange): Promise<void> {
@@ -205,7 +207,7 @@ export const create = (config: Config, auth: OAuth2Client) => {
 
         try {
             // Get all labels first
-            console.log('Fetching Gmail labels...');
+            logger.info('Fetching Gmail labels...');
             const labelMap = await getAllLabels(gmail);
 
             // Format dates for Gmail query
@@ -223,16 +225,15 @@ export const create = (config: Config, auth: OAuth2Client) => {
                 query += ` -label:${config.filters.exclude.labels.join(' AND -label:')}`;
             }
 
-            console.log('\nUsing Gmail search query:');
-            console.log(`- Date range: after ${afterDate} and before ${beforeDate}`);
-            if (config.filters.include.labels && config.filters.include.labels.length > 0) {
-                console.log(`- Including labels: ${config.filters.include.labels.join(', ')}`);
-            }
-            if (config.filters.exclude.labels && config.filters.exclude.labels.length > 0) {
-                console.log(`- Excluding labels: ${config.filters.exclude.labels.join(', ')}`);
-            }
-            console.log(`\nFull query: ${query}\n`);
-
+            logger.info('Using Gmail search query:', {
+                dateRange: {
+                    after: afterDate,
+                    before: beforeDate
+                },
+                includeLabels: config.filters.include.labels || [],
+                excludeLabels: config.filters.exclude.labels || [],
+                query
+            });
 
             const res = await gmail.users.messages.list({
                 userId: 'me',
@@ -241,10 +242,10 @@ export const create = (config: Config, auth: OAuth2Client) => {
             });
 
             const messages = res.data.messages || [];
-            console.log(`Found ${messages.length} messages in the specified date range`);
+            logger.info('Found messages in date range', { count: messages.length });
 
             if (config.export.dry_run) {
-                console.log('\nDRY RUN MODE: No files will be saved\n');
+                logger.info('DRY RUN MODE: No files will be saved');
             }
 
             for (const message of messages) {
@@ -264,7 +265,7 @@ export const create = (config: Config, auth: OAuth2Client) => {
                 const dateStr = headers.find(h => h.name === 'Date')?.value;
 
                 if (!dateStr) {
-                    console.warn('Skipping email with no date');
+                    logger.warn('Skipping email with no date');
                     continue;
                 }
 
@@ -287,9 +288,11 @@ export const create = (config: Config, auth: OAuth2Client) => {
                 const skipCheck = filter.shouldSkipEmail(email);
                 if (skipCheck.skip) {
                     filteredCount++;
-                    if (process.env.DEBUG) {
-                        console.log(`Filtered email: "${subject}" from "${from}" - ${skipCheck.reason}`);
-                    }
+                    logger.debug('Filtered email:', {
+                        subject,
+                        from,
+                        reason: skipCheck.reason
+                    });
                     continue;
                 }
 
@@ -329,7 +332,7 @@ export const create = (config: Config, auth: OAuth2Client) => {
 
                 // Check if file already exists
                 if (fs.existsSync(filePath)) {
-                    console.log(`Skipping existing email: ${filePath}`);
+                    logger.info('Skipping existing email:', { filePath });
                     skippedCount++;
                     continue;
                 }
@@ -364,20 +367,26 @@ Content-Type: ${mimeType}`;
                     fs.writeFileSync(filePath, emailContent);
                 }
                 processedCount++;
-                console.log(`${config.export.dry_run ? '[DRY RUN] Would export' : 'Exported'} email to: ${filePath} (${mimeType})`);
+                logger.info(`${config.export.dry_run ? '[DRY RUN] Would export' : 'Exported'} email:`, {
+                    filePath,
+                    mimeType
+                });
             }
 
-            console.log(`\nExport complete:`);
-            console.log(`- Processed: ${processedCount} emails`);
-            console.log(`- Skipped (existing): ${skippedCount} files`);
-            console.log(`- Filtered (rules): ${filteredCount} emails`);
-            console.log(`- Attachments ${config.export.dry_run ? 'would be saved' : 'saved'}: ${attachmentCount}`);
-            console.log(`- Total found: ${messages.length} emails`);
+            logger.info('Export complete:', {
+                processed: processedCount,
+                skipped: skippedCount,
+                filtered: filteredCount,
+                attachments: attachmentCount,
+                total: messages.length,
+                dryRun: config.export.dry_run
+            });
+
             if (config.export.dry_run) {
-                console.log('\nThis was a dry run. No files were actually saved.');
+                logger.info('This was a dry run. No files were actually saved.');
             }
         } catch (error) {
-            console.error('Error fetching emails:', error);
+            logger.error('Error fetching emails:', { error });
         }
     }
 
