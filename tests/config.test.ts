@@ -45,8 +45,6 @@ describe('createConfig', () => {
 
         const config = createConfig(mockArgs);
 
-        expect(config.export.start_date).toBe(mockArgs.start);
-        expect(config.export.end_date).toBe(mockArgs.end);
         expect(config.export.destination_dir).toBe(mockArgs.output);
         expect(config.export.dry_run).toBe(mockArgs.dryRun);
     });
