@@ -29,6 +29,7 @@
         "@types/commander": "^2.12.5",
         "@types/yaml": "^1.9.7",
         "commander": "^13.1.0",
+        "dayjs": "^1.11.13",
         "dotenv": "^16.4.7",
         "express": "^4.21.2",
         "glob": "^11.0.1",

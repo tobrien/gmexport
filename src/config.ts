@@ -9,12 +9,7 @@ export const DEFAULT_TOKEN_FILE = './token.json';
 export const DEFAULT_MAX_RESULTS = 10000;
 export const DEFAULT_DESTINATION_DIR = './exports';
 export const DEFAULT_SCOPES = ['https://www.googleapis.com/auth/gmail.readonly'];
-export const DEFAULT_CONFIG_FILE = './config.yaml';
-// Get date 31 days ago in YYYY-MM-DD format
-const date = new Date();
-date.setDate(date.getDate() - 31);
-export const DEFAULT_START_DATE = date.toISOString().split('T')[0];
-export const DEFAULT_END_DATE = new Date().toISOString().split('T')[0];
+
 
 export interface MessageFilter {
     labels?: string[];
@@ -33,8 +28,6 @@ export interface Config {
     export: {
         max_results: number;
         destination_dir: string;
-        start_date: string;
-        end_date: string;
         dry_run: boolean;
     };
     api: {
@@ -72,8 +65,6 @@ const defaultConfig: Config = {
     export: {
         max_results: DEFAULT_MAX_RESULTS,
         destination_dir: DEFAULT_DESTINATION_DIR,
-        start_date: DEFAULT_START_DATE,
-        end_date: DEFAULT_END_DATE,
         dry_run: false
     },
     api: {
@@ -89,8 +80,6 @@ export function createConfig(args: CommandLineArgs): Config {
 
     let config = defaultConfig;
 
-    config.export.start_date = args.start;
-    config.export.end_date = args.end;
     config.export.destination_dir = args.output;
     config.export.dry_run = args.dryRun;
 
