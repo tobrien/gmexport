@@ -8,8 +8,8 @@ import * as Gmail from './gmail.js';
 export interface CommandLineArgs {
     config: string;
     output: string;
-    start: string;
-    end: string;
+    start?: string;
+    end?: string;
     currentMonth?: boolean;
     dryRun: boolean;
 }
@@ -34,8 +34,8 @@ export async function main() {
         .description('Export Gmail messages within a date range to local files')
         .option('-c, --config <path>', 'Path to configuration file', DEFAULT_CONFIG_FILE)
         .option('-o, --output <path>', 'destination directory for exported emails', DEFAULT_OUTPUT_DIR)
-        .option('-s, --start <date>', 'start date (YYYY-MM-DD). If omitted, defaults to 31 days before end date', DEFAULT_START_DATE)
-        .option('-e, --end <date>', 'end date (YYYY-MM-DD). If omitted, defaults to current date', DEFAULT_END_DATE)
+        .option('-s, --start <date>', 'start date (YYYY-MM-DD). If omitted, defaults to 31 days before end date')
+        .option('-e, --end <date>', 'end date (YYYY-MM-DD). If omitted, defaults to current date')
         .option('--current-month', 'export emails from the first day of the current month to today')
         .option('--dry-run', 'perform a dry run without saving files', false)
         .version('1.0.0');
@@ -81,6 +81,7 @@ export function calculateDateRange(options: CommandLineArgs): DateRange {
         startDate = today.startOf('month');
         endDate = today;
     } else {
+
         // Handle end date
         if (options.end) {
             endDate = dayjs(options.end);
