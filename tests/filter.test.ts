@@ -1,5 +1,7 @@
-import { Configuration, Email } from '../src/types';
+import { Configuration } from '../src/types';
 import * as Filter from '../src/filter';
+import { gmail_v1 } from 'googleapis';
+import MessageWrapper from '../src/MessageWrapper';
 
 describe('Filter', () => {
     let mockConfig: Configuration;
@@ -16,7 +18,9 @@ describe('Filter', () => {
                 destination_dir: './test',
                 start_date: '2024-01-01',
                 end_date: '2024-01-31',
-                dry_run: false
+                dry_run: false,
+                output_structure: 'year',
+                timezone: 'UTC'
             },
             api: {
                 scopes: ['test.scope']
@@ -42,30 +46,40 @@ describe('Filter', () => {
 
     describe('shouldSkipEmail', () => {
         it('should not skip email matching include patterns', () => {
-            const email: Email = {
+            const email: gmail_v1.Schema$Message = {
                 id: '123',
-                from: 'include@example.com',
-                to: 'test@example.com',
-                subject: 'test subject',
-                date: new Date().toISOString(),
-                labels: ['INBOX'],
+                labelIds: ['INBOX'],
+                payload: {
+                    headers: [
+                        { name: 'From', value: 'include@example.com' },
+                        { name: 'To', value: 'test@example.com' },
+                        { name: 'Subject', value: 'test subject' },
+                        { name: 'Date', value: new Date().toISOString() },
+                        { name: 'Message-ID', value: '123' },
+                    ]
+                }
             };
 
-            const result = filter.shouldSkipEmail(email);
+            const result = filter.shouldSkipEmail(new MessageWrapper(email));
             expect(result.skip).toBe(false);
         });
 
         it('should skip email not matching any include patterns when includes are specified', () => {
-            const email: Email = {
+            const email: gmail_v1.Schema$Message = {
                 id: '123',
-                from: 'other@example.com',
-                to: 'test@example.com',
-                subject: 'test subject',
-                date: new Date().toISOString(),
-                labels: ['INBOX'],
+                labelIds: ['INBOX'],
+                payload: {
+                    headers: [
+                        { name: 'From', value: 'other@example.com' },
+                        { name: 'To', value: 'test@example.com' },
+                        { name: 'Subject', value: 'test subject' },
+                        { name: 'Date', value: new Date().toISOString() },
+                        { name: 'Message-ID', value: '123' },
+                    ]
+                }
             };
 
-            const result = filter.shouldSkipEmail(email);
+            const result = filter.shouldSkipEmail(new MessageWrapper(email));
             expect(result.skip).toBe(true);
             expect(result.reason).toBe('No include patterns matched');
         });
@@ -75,16 +89,21 @@ describe('Filter', () => {
             mockConfig.filters.include = {};
             filter = Filter.create(mockConfig);
 
-            const email: Email = {
+            const email: gmail_v1.Schema$Message = {
                 id: '123',
-                from: 'spam@example.com',
-                to: 'test@example.com',
-                subject: 'test subject',
-                date: new Date().toISOString(),
-                labels: ['INBOX'],
+                labelIds: ['INBOX'],
+                payload: {
+                    headers: [
+                        { name: 'From', value: 'spam@example.com' },
+                        { name: 'To', value: 'test@example.com' },
+                        { name: 'Subject', value: 'test subject' },
+                        { name: 'Date', value: new Date().toISOString() },
+                        { name: 'Message-ID', value: '123' },
+                    ]
+                }
             };
 
-            const result = filter.shouldSkipEmail(email);
+            const result = filter.shouldSkipEmail(new MessageWrapper(email));
             expect(result.skip).toBe(true);
             expect(result.reason).toBe('Skipped sender pattern');
         });
@@ -93,16 +112,21 @@ describe('Filter', () => {
             mockConfig.filters.include = {};
             filter = Filter.create(mockConfig);
 
-            const email: Email = {
+            const email: gmail_v1.Schema$Message = {
                 id: '123',
-                from: 'test@example.com',
-                to: 'test@example.com',
-                subject: 'test subject',
-                date: new Date().toISOString(),
-                labels: ['SPAM'],
+                labelIds: ['SPAM'],
+                payload: {
+                    headers: [
+                        { name: 'From', value: 'test@example.com' },
+                        { name: 'To', value: 'test@example.com' },
+                        { name: 'Subject', value: 'test subject' },
+                        { name: 'Date', value: new Date().toISOString() },
+                        { name: 'Message-ID', value: '123' },
+                    ]
+                }
             };
 
-            const result = filter.shouldSkipEmail(email);
+            const result = filter.shouldSkipEmail(new MessageWrapper(email));
             expect(result.skip).toBe(true);
             expect(result.reason).toBe('Skipped label');
         });
@@ -111,30 +135,40 @@ describe('Filter', () => {
             mockConfig.filters.include = {};
             filter = Filter.create(mockConfig);
 
-            const email: Email = {
+            const email: gmail_v1.Schema$Message = {
                 id: '123',
-                from: 'test@example.com',
-                to: 'test@example.com',
-                subject: 'test subject',
-                date: new Date().toISOString(),
-                labels: ['INBOX'],
+                labelIds: ['INBOX'],
+                payload: {
+                    headers: [
+                        { name: 'From', value: 'test@example.com' },
+                        { name: 'To', value: 'test@example.com' },
+                        { name: 'Subject', value: 'test subject' },
+                        { name: 'Date', value: new Date().toISOString() },
+                        { name: 'Message-ID', value: '123' },
+                    ]
+                }
             };
 
-            const result = filter.shouldSkipEmail(email);
+            const result = filter.shouldSkipEmail(new MessageWrapper(email));
             expect(result.skip).toBe(false);
         });
 
         it('should keep email matching include pattern regardless of exclude patterns', () => {
-            const email: Email = {
+            const email: gmail_v1.Schema$Message = {
                 id: '123',
-                from: 'include@example.com',
-                to: 'spam-to@example.com', // Would normally be excluded
-                subject: 'test subject',
-                date: new Date().toISOString(),
-                labels: ['SPAM'], // Would normally be excluded
+                labelIds: ['SPAM'],
+                payload: {
+                    headers: [
+                        { name: 'From', value: 'include@example.com' },
+                        { name: 'To', value: 'spam-to@example.com' }, // Would normally be excluded
+                        { name: 'Subject', value: 'test subject' },
+                        { name: 'Date', value: new Date().toISOString() },
+                        { name: 'Message-ID', value: '123' },
+                    ]
+                }
             };
 
-            const result = filter.shouldSkipEmail(email);
+            const result = filter.shouldSkipEmail(new MessageWrapper(email));
             expect(result.skip).toBe(false);
         });
     });

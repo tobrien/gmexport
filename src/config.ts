@@ -1,8 +1,7 @@
 import * as fs from 'fs';
 import * as yaml from 'js-yaml';
-import * as path from 'path';
 import { getLogger } from './logging.js';
-import { CommandLineArgs, Configuration } from './types';
+import { CommandLineArgs, Configuration, FilenameOption } from './types.js';
 
 // Internal default configuration values
 export const DEFAULT_CREDENTIALS_FILE = './credentials.json';
@@ -10,7 +9,9 @@ export const DEFAULT_TOKEN_FILE = './token.json';
 export const DEFAULT_MAX_RESULTS = 10000;
 export const DEFAULT_DESTINATION_DIR = './exports';
 export const DEFAULT_SCOPES = ['https://www.googleapis.com/auth/gmail.readonly'];
-
+export const DEFAULT_OUTPUT_STRUCTURE = 'month';
+export const DEFAULT_FILENAME_OPTIONS = ['date', 'time', 'subject'];
+export const DEFAULT_TIMEZONE = 'America/New_York';
 
 // Utility function for deep merging two objects.
 function deepMerge(target: any, source: any): any {
@@ -38,7 +39,10 @@ const defaultConfig: Configuration = {
     export: {
         max_results: DEFAULT_MAX_RESULTS,
         destination_dir: DEFAULT_DESTINATION_DIR,
-        dry_run: false
+        dry_run: false,
+        output_structure: DEFAULT_OUTPUT_STRUCTURE,
+        filename_options: DEFAULT_FILENAME_OPTIONS as FilenameOption[],
+        timezone: DEFAULT_TIMEZONE
     },
     api: {
         scopes: DEFAULT_SCOPES
@@ -51,26 +55,40 @@ const defaultConfig: Configuration = {
 
 export function createConfiguration(args: CommandLineArgs): Configuration {
     const logger = getLogger();
-    let config = defaultConfig;
+    let config: Configuration = { ...defaultConfig };
 
-    config.export.destination_dir = args.output;
-    config.export.dry_run = args.dryRun;
-
-    // Attempt to load config.yaml from the current directory
-    const configFilePath = path.resolve(args.config);
-    if (fs.existsSync(configFilePath)) {
+    // Override with command line arguments
+    if (args.config) {
         try {
-            const configFile = fs.readFileSync(configFilePath, 'utf8');
+            const configFile = fs.readFileSync(args.config, 'utf8');
             const fileConfig = yaml.load(configFile);
-            if (fileConfig && typeof fileConfig === 'object') {
-                config = deepMerge(defaultConfig, fileConfig);
-            }
-        } catch (error) {
-            logger.error('Error loading configuration from config.yaml:', { error });
-            logger.warn('Using default configuration.');
+            config = deepMerge(config, fileConfig);
+        } catch (error: any) {
+            logger.error('Error reading config file: %s %s', error.message, error.stack);
+            process.exit(1);
         }
-    } else {
-        logger.warn(`Configuration file not found at ${configFilePath}. Using default configuration.`);
+    }
+
+    // Override with command line arguments
+    if (args.output) {
+        config.export.destination_dir = args.output;
+    }
+
+    if (args.dryRun) {
+        config.export.dry_run = true;
+    }
+
+    if (args.outputStructure) {
+        if (!['year', 'month', 'day'].includes(args.outputStructure)) {
+            logger.error('Invalid output structure. Must be one of: year, month, day');
+            process.exit(1);
+        }
+        config.export.output_structure = args.outputStructure as 'year' | 'month' | 'day';
+    }
+
+    // Handle filename options
+    if (args.filenameOptions) {
+        config.export.filename_options = args.filenameOptions;
     }
 
     return config;
