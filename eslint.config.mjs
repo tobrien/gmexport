@@ -1,5 +1,6 @@
 import { defineConfig, globalIgnores } from "eslint/config";
 import typescriptEslint from "@typescript-eslint/eslint-plugin";
+import importPlugin from "eslint-plugin-import";
 import globals from "globals";
 import tsParser from "@typescript-eslint/parser";
 import path from "node:path";
@@ -28,6 +29,7 @@ export default defineConfig([
 
         plugins: {
             "@typescript-eslint": typescriptEslint,
+            "import": importPlugin,
         },
 
         languageOptions: {
@@ -54,6 +56,14 @@ export default defineConfig([
 
             indent: ["error", 4, {
                 SwitchCase: 1,
+            }],
+
+            "import/extensions": ["error", "always", {
+                ignorePackages: true,
+                pattern: {
+                    "js": "always",
+                    "ts": "always"
+                }
             }],
         },
     }]);

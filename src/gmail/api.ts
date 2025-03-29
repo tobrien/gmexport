@@ -1,7 +1,7 @@
 import { GaxiosResponse } from 'gaxios';
 import { OAuth2Client } from 'google-auth-library';
 import { gmail_v1, google } from 'googleapis';
-import { getLogger } from '../logging';
+import { getLogger } from '../logging.js';
 
 export interface Instance {
     listLabels: (params: gmail_v1.Params$Resource$Users$Labels$List) => Promise<gmail_v1.Schema$Label[]>;

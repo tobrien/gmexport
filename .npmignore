@@ -1,7 +1,7 @@
 # Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
 coverage/
+exports/
 node_modules/
-dist/tests/
 tests/
 .DS_Store
 .eslintrc.json
