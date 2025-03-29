@@ -1,11 +1,11 @@
 import { GaxiosResponse } from 'gaxios';
 import { OAuth2Client } from 'google-auth-library';
 import { gmail_v1, google } from 'googleapis';
-import { getLogger } from '../logging.js';
+import { getLogger } from '../logging';
 
 export interface Instance {
     listLabels: (params: gmail_v1.Params$Resource$Users$Labels$List) => Promise<gmail_v1.Schema$Label[]>;
-    listMessages: (params: gmail_v1.Params$Resource$Users$Messages$List, callback: (messages: gmail_v1.Schema$Message[]) => void) => Promise<void>;
+    listMessages: (params: gmail_v1.Params$Resource$Users$Messages$List, callback: (messages: gmail_v1.Schema$Message[]) => Promise<void>) => Promise<void>;
     getMessage: (params: gmail_v1.Params$Resource$Users$Messages$Get) => Promise<gmail_v1.Schema$Message | null>;
     getAttachment: (params: gmail_v1.Params$Resource$Users$Messages$Attachments$Get) => Promise<gmail_v1.Schema$MessagePartBody | null>;
 }
@@ -25,7 +25,7 @@ export const create = (auth: OAuth2Client): Instance => {
     }
 
 
-    async function listMessages(params: gmail_v1.Params$Resource$Users$Messages$List, callback: (messages: gmail_v1.Schema$Message[]) => void): Promise<void> {
+    async function listMessages(params: gmail_v1.Params$Resource$Users$Messages$List, callback: (messages: gmail_v1.Schema$Message[]) => Promise<void>): Promise<void> {
         const logger = getLogger();
 
         logger.debug('Fetching messages with params: %j', params);
@@ -43,7 +43,7 @@ export const create = (auth: OAuth2Client): Instance => {
             const messages = res.data.messages || [];
             logger.info('Found %d messages for params: %j', messages.length, params);
 
-            callback(messages);
+            await callback(messages);
 
             nextPageToken = res.data.nextPageToken || undefined;
         } while (nextPageToken);

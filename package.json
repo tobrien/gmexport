@@ -12,7 +12,7 @@
         "start": "node dist/main.js",
         "dev": "tsc -w",
         "watch": "nodemon --watch src --ext ts,json --exec \"yarn build\"",
-        "test": "jest",
+        "test": "NODE_OPTIONS=--experimental-vm-modules jest",
         "lint": "eslint . --ext .ts",
         "lint:fix": "eslint . --ext .ts --fix",
         "clean": "rm -rf dist",
