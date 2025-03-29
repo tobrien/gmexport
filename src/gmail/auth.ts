@@ -3,10 +3,10 @@ import { OAuth2Client } from 'google-auth-library';
 import { google } from 'googleapis';
 import * as path from 'path';
 import * as readline from 'readline';
-import { Config } from './config.js';
-import { getLogger } from './logging.js';
+import { getLogger } from '../logging.js';
+import { Configuration } from '../types.js';
 
-export const create = (config: Config) => {
+export const create = (config: Configuration) => {
     const logger = getLogger();
 
     async function authorize(): Promise<OAuth2Client> {
@@ -23,6 +23,7 @@ export const create = (config: Config) => {
             const token = fs.readFileSync(path.join(config.credentials.token_file), 'utf-8');
             oAuth2Client.setCredentials(JSON.parse(token));
             return oAuth2Client;
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (err) {
             return await getNewToken(oAuth2Client);
         }
@@ -34,7 +35,7 @@ export const create = (config: Config) => {
             scope: config.api.scopes,
         });
 
-        logger.info('Please authorize this app by visiting this URL:', { authUrl });
+        logger.info('Please authorize this app by visiting this URL: %s', authUrl);
 
         const code = await new Promise<string>((resolve) => {
             const rl = readline.createInterface({

@@ -1,12 +1,12 @@
 import { jest } from '@jest/globals';
 import { Command } from 'commander';
 import dayjs from 'dayjs';
-import * as Auth from '../src/auth';
-import * as Config from '../src/config';
-import * as Gmail from '../src/gmail';
-import { calculateDateRange, CommandLineArgs, main } from '../src/main';
-import { getLogger, setLogLevel } from '../src/logging';
-
+import * as Config from '../src/config.js';
+import * as GmailExport from '../src/gmailExport.js';
+import * as Auth from '../src/gmail/auth.js';
+import { getLogger, setLogLevel } from '../src/logging.js';
+import { calculateDateRange, logDetailedConfiguration, logExportConfiguration, main } from '../src/main.js';
+import { CommandLineArgs, Configuration } from '../src/types.js';
 // Mock the logging module
 jest.mock('../src/logging', () => ({
     getLogger: jest.fn().mockReturnValue({
@@ -42,14 +42,14 @@ jest.mock('commander', () => {
 });
 
 // Mock auth module to prevent interactive prompt
-jest.mock('../src/auth', () => ({
+jest.mock('../src/gmail/auth', () => ({
     create: jest.fn().mockReturnValue({
         authorize: jest.fn().mockResolvedValue('mock-auth-client' as unknown as never)
     })
 }));
 
 jest.mock('../src/config');
-jest.mock('../src/gmail');
+jest.mock('../src/gmailExport');
 
 describe('main', () => {
     let mockAuth: any;
@@ -88,7 +88,7 @@ describe('main', () => {
         mockGmail = {
             exportEmails: jest.fn().mockResolvedValue(undefined as unknown as never)
         };
-        (Gmail.create as jest.Mock).mockReturnValue(mockGmail);
+        (GmailExport.create as jest.Mock).mockReturnValue(mockGmail);
 
         // Mock Config
         mockConfig = {
@@ -111,7 +111,7 @@ describe('main', () => {
                 }
             }
         };
-        (Config.createConfig as jest.Mock).mockReturnValue(mockConfig);
+        (Config.createConfiguration as jest.Mock).mockReturnValue(mockConfig);
 
         // Mock logger
         mockLogger = {
@@ -136,10 +136,10 @@ describe('main', () => {
 
         expect(mockCommandInstance.name).toHaveBeenCalledWith('gmail-export');
         expect(mockCommandInstance.parse).toHaveBeenCalled();
-        expect(Config.createConfig).toHaveBeenCalled();
+        expect(Config.createConfiguration).toHaveBeenCalled();
         expect(Auth.create).toHaveBeenCalledWith(mockConfig);
         expect(mockAuth.authorize).toHaveBeenCalled();
-        expect(Gmail.create).toHaveBeenCalledWith(mockConfig, 'mock-auth-client');
+        expect(GmailExport.create).toHaveBeenCalledWith(mockConfig, expect.objectContaining({ listLabels: expect.any(Function), getMessage: expect.any(Function), listMessages: expect.any(Function), getAttachment: expect.any(Function) }));
         expect(mockGmail.exportEmails).toHaveBeenCalled();
         expect(processExitSpy).not.toHaveBeenCalled();
     });
@@ -241,8 +241,8 @@ describe('main', () => {
 
             const range = calculateDateRange(options as CommandLineArgs);
 
-            expect(range.start.format()).toBe(dayjs('2024-01-01').format());
-            expect(range.end.format()).toBe(dayjs('2024-01-31').format());
+            expect(dayjs(range.start).format()).toBe(dayjs('2024-01-01').format());
+            expect(dayjs(range.end).format()).toBe(dayjs('2024-01-31').format());
         });
 
         it('should calculate current month range when --current-month is used', () => {
@@ -253,8 +253,8 @@ describe('main', () => {
             const range = calculateDateRange(options as CommandLineArgs);
 
             // For mocked date 2024-03-15, should return full March range
-            expect(range.start.format()).toBe(dayjs('2024-03-01').format());
-            expect(range.end.format()).toBe(dayjs('2024-03-15T00:00:00.000Z').format());
+            expect(dayjs(range.start).format()).toBe(dayjs('2024-03-01').format());
+            expect(dayjs(range.end).format()).toBe(dayjs('2024-03-15T00:00:00.000Z').format());
         });
 
         it('should use end date as today when only start date provided', () => {
@@ -265,8 +265,107 @@ describe('main', () => {
 
             const range = calculateDateRange(options as CommandLineArgs);
 
-            expect(range.start.format()).toBe(dayjs('2024-03-01').format());
-            expect(range.end.format()).toBe(dayjs('2024-03-15T00:00:00.000Z').format()); // Mocked current date
+            expect(dayjs(range.start).format()).toBe(dayjs('2024-03-01').format());
+            expect(dayjs(range.end).format()).toBe(dayjs('2024-03-15T00:00:00.000Z').format()); // Mocked current date
+        });
+    });
+
+    describe('logExportConfiguration', () => {
+        it('should log export configuration with correct format', () => {
+            const options = {
+                config: 'test-config.yaml',
+                output: './test-output',
+                start: '2024-01-01',
+                end: '2024-01-31',
+                dryRun: false
+            } as CommandLineArgs;
+
+            const dateRange = {
+                start: dayjs('2024-01-01').toDate(),
+                end: dayjs('2024-01-31').toDate()
+            };
+
+            logExportConfiguration(options, './test-output', dateRange);
+
+            expect(mockLogger.info).toHaveBeenCalledWith('Export Configuration:');
+            expect(mockLogger.info).toHaveBeenCalledWith('\tConfig File: test-config.yaml');
+            expect(mockLogger.info).toHaveBeenCalledWith('\tDate Range:');
+            expect(mockLogger.info).toHaveBeenCalledWith('\t\tStart: 2024-01-01');
+            expect(mockLogger.info).toHaveBeenCalledWith('\t\tEnd: 2024-01-31');
+        });
+    });
+
+    describe('logDetailedConfiguration', () => {
+        it('should log detailed configuration with correct format', () => {
+            const config = {
+                credentials: {
+                    credentials_file: 'test-creds.json',
+                    token_file: 'test-token.json'
+                },
+                export: {
+                    max_results: 1000,
+                    destination_dir: './test-output'
+                },
+                filters: {
+                    include: {
+                        labels: ['INBOX', 'SENT'],
+                        from: ['test@example.com'],
+                        to: ['recipient@example.com'],
+                        subject: ['Test Subject']
+                    },
+                    exclude: {
+                        labels: ['SPAM'],
+                        from: ['spam@example.com'],
+                        to: ['blocked@example.com'],
+                        subject: ['Spam Subject']
+                    }
+                }
+            } as Configuration;
+
+            logDetailedConfiguration(config);
+
+            expect(mockLogger.info).toHaveBeenCalledWith('Detailed Configuration:');
+            expect(mockLogger.info).toHaveBeenCalledWith('\tCredentials:');
+            expect(mockLogger.info).toHaveBeenCalledWith('\t\tCredentials File: test-creds.json');
+            expect(mockLogger.info).toHaveBeenCalledWith('\t\tToken File: test-token.json');
+            expect(mockLogger.info).toHaveBeenCalledWith('\tExport Settings:');
+            expect(mockLogger.info).toHaveBeenCalledWith('\t\tMax Results: 1000');
+            expect(mockLogger.info).toHaveBeenCalledWith('\t\tDestination: ./test-output');
+            expect(mockLogger.info).toHaveBeenCalledWith('\tFilters:');
+            expect(mockLogger.info).toHaveBeenCalledWith('\t\tInclude:');
+            expect(mockLogger.info).toHaveBeenCalledWith('\t\t\tLabels: INBOX, SENT');
+            expect(mockLogger.info).toHaveBeenCalledWith('\t\t\tFrom: test@example.com');
+            expect(mockLogger.info).toHaveBeenCalledWith('\t\t\tTo: recipient@example.com');
+            expect(mockLogger.info).toHaveBeenCalledWith('\t\t\tSubject: Test Subject');
+            expect(mockLogger.info).toHaveBeenCalledWith('\t\tExclude:');
+            expect(mockLogger.info).toHaveBeenCalledWith('\t\t\tLabels: SPAM');
+            expect(mockLogger.info).toHaveBeenCalledWith('\t\t\tFrom: spam@example.com');
+            expect(mockLogger.info).toHaveBeenCalledWith('\t\t\tTo: blocked@example.com');
+            expect(mockLogger.info).toHaveBeenCalledWith('\t\t\tSubject: Spam Subject');
+        });
+
+        it('should handle empty or undefined filter values', () => {
+            const config = {
+                credentials: {
+                    credentials_file: 'test-creds.json',
+                    token_file: 'test-token.json'
+                },
+                export: {
+                    max_results: 1000,
+                    destination_dir: './test-output'
+                },
+                filters: {
+                    include: {},
+                    exclude: {}
+                }
+            } as Configuration;
+
+            logDetailedConfiguration(config);
+
+            expect(mockLogger.info).toHaveBeenCalledWith('\t\t\tLabels: none');
+            expect(mockLogger.info).toHaveBeenCalledWith('\t\t\tFrom: none');
+            expect(mockLogger.info).toHaveBeenCalledWith('\t\t\tTo: none');
+            expect(mockLogger.info).toHaveBeenCalledWith('\t\t\tSubject: none');
         });
     });
 });

@@ -1,9 +1,8 @@
-import { Config } from '../src/config';
+import { Configuration, Email } from '../src/types';
 import * as Filter from '../src/filter';
-import { Email } from '../src/gmail';
 
 describe('Filter', () => {
-    let mockConfig: Config;
+    let mockConfig: Configuration;
     let filter: ReturnType<typeof Filter.create>;
 
     beforeEach(() => {
@@ -36,7 +35,7 @@ describe('Filter', () => {
                     to: ['spam-to@example.com']
                 }
             }
-        } as Config;
+        } as Configuration;
 
         filter = Filter.create(mockConfig);
     });

@@ -1,20 +1,12 @@
 #!/usr/bin/env node
 import { Command } from 'commander';
 import dayjs from 'dayjs';
-import * as Auth from './auth.js';
 import * as Config from './config.js';
-import * as Gmail from './gmail.js';
+import * as GmailExport from './gmailExport.js';
+import * as GmailApi from './gmail/api.js';
+import * as Auth from './gmail/auth.js';
 import { getLogger, setLogLevel } from './logging.js';
-
-export interface CommandLineArgs {
-    config: string;
-    output: string;
-    start?: string;
-    end?: string;
-    currentMonth?: boolean;
-    dryRun: boolean;
-    verbose?: boolean;
-}
+import { CommandLineArgs, Configuration, DateRange } from './types.js';
 
 export const DEFAULT_CONFIG_FILE = './config.yaml';
 export const DEFAULT_OUTPUT_DIR = './exports';
@@ -22,11 +14,6 @@ export const DEFAULT_OUTPUT_DIR = './exports';
 // Get date 31 days ago in YYYY-MM-DD format
 export const DEFAULT_START_DATE = dayjs().subtract(31, 'day').format('YYYY-MM-DD');
 export const DEFAULT_END_DATE = dayjs().format('YYYY-MM-DD');
-
-export interface DateRange {
-    start: dayjs.Dayjs;
-    end: dayjs.Dayjs;
-}
 
 export async function main() {
     const program = new Command();
@@ -66,14 +53,14 @@ export async function main() {
 
         logExportConfiguration(options, destinationDir, dateRange);
 
-        const config = Config.createConfig(options);
+        const config = Config.createConfiguration(options);
 
         // Print configuration details
         logDetailedConfiguration(config);
 
         const auth = await Auth.create(config).authorize();
-
-        const gmail = Gmail.create(config, auth);
+        const api = await GmailApi.create(auth);
+        const gmail = GmailExport.create(config, api);
         await gmail.exportEmails(dateRange);
 
     } catch (error) {
@@ -121,41 +108,40 @@ export function calculateDateRange(options: CommandLineArgs): DateRange {
     }
 
     return {
-        start: startDate,
-        end: endDate
+        start: startDate.toDate(),
+        end: endDate.toDate()
     };
 }
 
-function logExportConfiguration(options: CommandLineArgs, destinationDir: string, dateRange: DateRange) {
+export function logExportConfiguration(options: CommandLineArgs, destinationDir: string, dateRange: DateRange) {
     const logger = getLogger();
     logger.info('Export Configuration:');
-    logger.info(`  Config File: ${options.config}`);
-    logger.info(`  Output Directory: ${destinationDir}`);
-    logger.info('  Date Range:');
-    logger.info(`    Start: ${dateRange.start.format('YYYY-MM-DD')}`);
-    logger.info(`    End: ${dateRange.end.format('YYYY-MM-DD')}`);
+    logger.info(`\tConfig File: ${options.config}`);
+    logger.info('\tDate Range:');
+    logger.info(`\t\tStart: ${dayjs(dateRange.start).format('YYYY-MM-DD')}`);
+    logger.info(`\t\tEnd: ${dayjs(dateRange.end).format('YYYY-MM-DD')}`);
 }
 
-function logDetailedConfiguration(config: Config.Config) {
+export function logDetailedConfiguration(config: Configuration) {
     const logger = getLogger();
     logger.info('Detailed Configuration:');
-    logger.info('  Credentials:');
-    logger.info(`    Credentials File: ${config.credentials.credentials_file}`);
-    logger.info(`    Token File: ${config.credentials.token_file}`);
-    logger.info('  Export Settings:');
-    logger.info(`    Max Results: ${config.export.max_results}`);
-    logger.info(`    Destination: ${config.export.destination_dir}`);
-    logger.info('  Filters:');
-    logger.info('    Include:');
-    logger.info(`      Labels: ${config.filters.include?.labels?.join(', ') || 'none'}`);
-    logger.info(`      From: ${config.filters.include?.from?.join(', ') || 'none'}`);
-    logger.info(`      To: ${config.filters.include?.to?.join(', ') || 'none'}`);
-    logger.info(`      Subject: ${config.filters.include?.subject?.join(', ') || 'none'}`);
-    logger.info('    Exclude:');
-    logger.info(`      Labels: ${config.filters.exclude?.labels?.join(', ') || 'none'}`);
-    logger.info(`      From: ${config.filters.exclude?.from?.join(', ') || 'none'}`);
-    logger.info(`      To: ${config.filters.exclude?.to?.join(', ') || 'none'}`);
-    logger.info(`      Subject: ${config.filters.exclude?.subject?.join(', ') || 'none'}`);
+    logger.info('\tCredentials:');
+    logger.info(`\t\tCredentials File: ${config.credentials.credentials_file}`);
+    logger.info(`\t\tToken File: ${config.credentials.token_file}`);
+    logger.info('\tExport Settings:');
+    logger.info(`\t\tMax Results: ${config.export.max_results}`);
+    logger.info(`\t\tDestination: ${config.export.destination_dir}`);
+    logger.info('\tFilters:');
+    logger.info('\t\tInclude:');
+    logger.info(`\t\t\tLabels: ${config.filters.include?.labels?.join(', ') || 'none'}`);
+    logger.info(`\t\t\tFrom: ${config.filters.include?.from?.join(', ') || 'none'}`);
+    logger.info(`\t\t\tTo: ${config.filters.include?.to?.join(', ') || 'none'}`);
+    logger.info(`\t\t\tSubject: ${config.filters.include?.subject?.join(', ') || 'none'}`);
+    logger.info('\t\tExclude:');
+    logger.info(`\t\t\tLabels: ${config.filters.exclude?.labels?.join(', ') || 'none'}`);
+    logger.info(`\t\t\tFrom: ${config.filters.exclude?.from?.join(', ') || 'none'}`);
+    logger.info(`\t\t\tTo: ${config.filters.exclude?.to?.join(', ') || 'none'}`);
+    logger.info(`\t\t\tSubject: ${config.filters.exclude?.subject?.join(', ') || 'none'}`);
 }
 
 main(); 

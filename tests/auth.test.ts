@@ -1,8 +1,8 @@
 import { jest } from '@jest/globals';
 import { google } from 'googleapis';
 import { OAuth2Client } from 'google-auth-library';
-import * as Auth from '../src/auth';
-import { Config } from '../src/config';
+import * as Auth from '../src/gmail/auth';
+import { Configuration } from '../src/types';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as readline from 'readline';
@@ -16,7 +16,7 @@ jest.mock('readline');
 describe('authenticate', () => {
     let mockAuth: jest.Mocked<typeof google.auth>;
     let mockOAuth2Client: jest.Mocked<OAuth2Client>;
-    let mockConfig: Config;
+    let mockConfig: Configuration;
     let mockCredentials: any;
     let mockReadlineInterface: any;
 
@@ -92,7 +92,7 @@ describe('authenticate', () => {
                     to: ['test@example.com']
                 }
             }
-        } as Config;
+        } as Configuration;
 
         (google.auth as unknown) = mockAuth;
     });
