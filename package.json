@@ -5,7 +5,7 @@
     "main": "dist/main.js",
     "type": "module",
     "bin": {
-        "gmexport": "./dist/main.js"
+        "gmexport": "./dist/src/main.js"
     },
     "scripts": {
         "build": "tsc",
