@@ -1,7 +1,7 @@
 import { jest } from '@jest/globals';
 import * as fs from 'fs';
 import * as yaml from 'js-yaml';
-import { createConfig } from '../src/config';
+import { createConfiguration } from '../src/config';
 import { getLogger } from '../src/logging';
 
 // Mock the logging module
@@ -65,7 +65,7 @@ describe('createConfig', () => {
     it('should use command line arguments for export settings', () => {
         (fs.existsSync as jest.Mock).mockReturnValue(false);
 
-        const config = createConfig(mockArgs);
+        const config = createConfiguration(mockArgs);
 
         expect(config.export.destination_dir).toBe(mockArgs.output);
         expect(config.export.dry_run).toBe(mockArgs.dryRun);
@@ -76,7 +76,7 @@ describe('createConfig', () => {
         (fs.readFileSync as jest.Mock).mockReturnValue('dummy yaml content');
         (yaml.load as jest.Mock).mockReturnValue(mockFileConfig);
 
-        const config = createConfig(mockArgs);
+        const config = createConfiguration(mockArgs);
 
         expect(config.credentials.credentials_file).toBe(mockFileConfig.credentials.credentials_file);
         expect(config.credentials.token_file).toBe(mockFileConfig.credentials.token_file);
@@ -94,7 +94,7 @@ describe('createConfig', () => {
     it('should use default config when config file does not exist', () => {
         (fs.existsSync as jest.Mock).mockReturnValue(false);
 
-        const config = createConfig(mockArgs);
+        const config = createConfiguration(mockArgs);
 
         expect(config.credentials.credentials_file).toBe('custom-creds.json');
         expect(config.credentials.token_file).toBe('custom-token.json');
@@ -120,7 +120,7 @@ describe('createConfig', () => {
             throw new Error('YAML parsing error');
         });
 
-        const config = createConfig(mockArgs);
+        const config = createConfiguration(mockArgs);
 
         // Verify error was logged
         expect(mockLogger.error).toHaveBeenCalledWith(

@@ -1,8 +1,8 @@
 import * as fs from 'fs';
-import * as path from 'path';
 import * as yaml from 'js-yaml';
-import { CommandLineArgs } from './main';
+import * as path from 'path';
 import { getLogger } from './logging.js';
+import { CommandLineArgs, Configuration } from './types';
 
 // Internal default configuration values
 export const DEFAULT_CREDENTIALS_FILE = './credentials.json';
@@ -11,34 +11,6 @@ export const DEFAULT_MAX_RESULTS = 10000;
 export const DEFAULT_DESTINATION_DIR = './exports';
 export const DEFAULT_SCOPES = ['https://www.googleapis.com/auth/gmail.readonly'];
 
-
-export interface MessageFilter {
-    labels?: string[];
-    from?: string[];
-    to?: string[];
-    subject?: string[];
-}
-
-
-// Configuration type definition
-export interface Config {
-    credentials: {
-        credentials_file: string;
-        token_file: string;
-    };
-    export: {
-        max_results: number;
-        destination_dir: string;
-        dry_run: boolean;
-    };
-    api: {
-        scopes: string[];
-    };
-    filters: {
-        exclude: MessageFilter;
-        include: MessageFilter;
-    };
-}
 
 // Utility function for deep merging two objects.
 function deepMerge(target: any, source: any): any {
@@ -58,7 +30,7 @@ function deepMerge(target: any, source: any): any {
 }
 
 // Default configuration
-const defaultConfig: Config = {
+const defaultConfig: Configuration = {
     credentials: {
         credentials_file: DEFAULT_CREDENTIALS_FILE,
         token_file: DEFAULT_TOKEN_FILE
@@ -77,7 +49,7 @@ const defaultConfig: Config = {
     }
 };
 
-export function createConfig(args: CommandLineArgs): Config {
+export function createConfiguration(args: CommandLineArgs): Configuration {
     const logger = getLogger();
     let config = defaultConfig;
 
