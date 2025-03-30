@@ -88,7 +88,7 @@ export function createConfiguration(args: CommandLineArgs): Configuration {
 
     // Handle filename options
     if (args.filenameOptions) {
-        config.export.filename_options = args.filenameOptions;
+        config.export.filename_options = args.filenameOptions.split(',') as FilenameOption[];
     }
 
     return config;

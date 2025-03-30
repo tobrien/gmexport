@@ -9,7 +9,7 @@ export interface CommandLineArgs {
     dryRun: boolean;
     verbose?: boolean;
     outputStructure?: 'year' | 'month' | 'day';
-    filenameOptions?: FilenameOption[];
+    filenameOptions?: string;
 }
 
 export interface DateRange {
