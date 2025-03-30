@@ -109,13 +109,10 @@ export const create = (config: Configuration, api: GmailApi.Instance): Instance 
             return;
         }
 
-        console.error('Processing message: %s', messageId);
-
         try {
             // Wrap the message metadata in a wrapper class to reduce the amount of code needed to access the message metadata
             const wrappedMessage = new MessageWrapper(messageMetadata);
 
-            console.error('Wrapped message: %j', wrappedMessage);
             // Check if email should be skipped
             const skipCheck = filter.shouldSkipEmail(wrappedMessage);
             if (skipCheck.skip) {
@@ -133,17 +130,13 @@ export const create = (config: Configuration, api: GmailApi.Instance): Instance 
                 config
             );
 
-            console.error('File path: %s', filePath);
-
             // Skip if file already exists
             if (fs.existsSync(filePath)) {
-                console.error('Skipping existing file: %s', filePath);
                 logger.debug('Skipping existing file: %s', filePath);
                 skippedCount++;
                 return;
             }
 
-            console.error('Getting raw message');
             const messageRaw: gmail_v1.Schema$Message | null = await api.getMessage({ userId, id: messageId!, format: 'raw' });
             if (!messageRaw) {
                 logger.error('Skipping raw export for message with no data: %s', messageId);
@@ -174,7 +167,6 @@ export const create = (config: Configuration, api: GmailApi.Instance): Instance 
     async function exportEmails(dateRange: DateRange): Promise<void> {
         try {
             const query = createQuery(dateRange, config);
-            console.error('List Messages');
             await api.listMessages({ userId, q: query, maxResults: config.export.max_results }, async (messageBatch) => {
                 logger.info('Processing %d messages', messageBatch.length);
                 // Process all messages in the batch concurrently

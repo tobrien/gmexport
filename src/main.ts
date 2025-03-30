@@ -120,8 +120,8 @@ export async function main() {
         const gmail = GmailExport.create(config, api);
         await gmail.exportEmails(dateRange);
 
-    } catch (error) {
-        logger.error('Error occurred during export:', { error });
+    } catch (error: any) {
+        logger.error('Error occurred during export: %s %s', error.message, error.stack);
         process.exit(1);
     }
 }

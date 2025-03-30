@@ -50,10 +50,6 @@ export default defineConfig([
                 argsIgnorePattern: "^_",
             }],
 
-            "no-console": ["warn", {
-                allow: ["warn", "error", "debug"],
-            }],
-
             indent: ["error", 4, {
                 SwitchCase: 1,
             }],
@@ -65,5 +61,13 @@ export default defineConfig([
                     "ts": "always"
                 }
             }],
+
+            "import/no-extraneous-dependencies": ["error", {
+                devDependencies: true,
+                optionalDependencies: false,
+                peerDependencies: false,
+            }],
+
+            "no-console": ["error"],
         },
     }]);
