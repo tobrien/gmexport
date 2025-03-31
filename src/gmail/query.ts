@@ -1,27 +1,28 @@
-import dayjs from 'dayjs';
 import { getLogger } from '../logging.js';
-import { Configuration, DateRange } from '../types.js';
+import * as Export from '../export.js';
+import * as Run from '../run.js';
+import * as Dates from '../util/dates.js';
+import { DATE_FORMAT_YEAR_MONTH_DAY_SLASH } from '../constants.js';
 
+export function createQuery(dateRange: Run.DateRange, config: Export.Config, timezone: string): string {
+    const dates = Dates.create({ timezone });
+    const afterDate = dates.format(dateRange.start, DATE_FORMAT_YEAR_MONTH_DAY_SLASH);
 
-export function formatDateForGmailQuery(date: Date): string {
-    return dayjs(date).format('YYYY/MM/DD');
-}
-export function createQuery(dateRange: DateRange, config: Configuration): string {
-    const afterDate = formatDateForGmailQuery(dateRange.start);
     // Add one day to end date to make the range inclusive
-    const adjustedEndDate = dayjs(dateRange.end).add(1, 'day');
-    const beforeDate = formatDateForGmailQuery(adjustedEndDate.toDate());
+    const adjustedEndDate = dates.addDays(dateRange.end, 1);
+    const beforeDate = dates.format(adjustedEndDate, DATE_FORMAT_YEAR_MONTH_DAY_SLASH);
+
 
     // Construct Gmail search query
     let query = `after:${afterDate} before:${beforeDate}`;
-    if (config.filters.include.labels && config.filters.include.labels.length > 0) {
+    if (config.filters?.include?.labels && config.filters.include.labels.length > 0) {
         query += ` label:${config.filters.include.labels.join(' OR label:')}`;
     }
-    if (config.filters.exclude.labels && config.filters.exclude.labels.length > 0) {
+    if (config.filters?.exclude?.labels && config.filters.exclude.labels.length > 0) {
         query += ` -label:${config.filters.exclude.labels.join(' AND -label:')}`;
     }
 
-    printGmailQueryInfo(afterDate, beforeDate, config.filters.include.labels || [], config.filters.exclude.labels || [], query);
+    printGmailQueryInfo(afterDate, beforeDate, config.filters?.include?.labels || [], config.filters?.exclude?.labels || [], query);
     return query;
 }
 

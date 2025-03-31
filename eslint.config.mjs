@@ -69,5 +69,15 @@ export default defineConfig([
             }],
 
             "no-console": ["error"],
+
+            "no-restricted-imports": ["error", {
+                paths: ["dayjs", "fs", "moment-timezone"],
+                patterns: [
+                    {
+                        group: ["src/**"],
+                        message: "Use absolute imports instead of relative imports"
+                    }
+                ]
+            }]
         },
     }]);

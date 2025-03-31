@@ -23,14 +23,15 @@ export default {
     testTimeout: 30000,
     setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
     collectCoverage: true,
+    collectCoverageFrom: ['src/**/*.ts'],
     coverageDirectory: 'coverage',
     coverageReporters: ['text', 'lcov', 'html'],
     coverageThreshold: {
         global: {
-            branches: 43,
-            functions: 48,
-            lines: 43,
-            statements: 44
+            statements: 76,
+            branches: 71,
+            functions: 88,
+            lines: 76,
         }
     },
     verbose: true,
@@ -40,7 +41,6 @@ export default {
     },
     rootDir: '.',
     moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
-    resolver: undefined,
     transformIgnorePatterns: [
         'node_modules/(?!(dayjs)/)'
     ]

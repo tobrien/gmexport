@@ -1,4 +1,5 @@
 import winston from 'winston';
+import { DATE_FORMAT_YEAR_MONTH_DAY_HOURS_MINUTES_SECONDS, PROGRAM_NAME } from './constants.js';
 
 export interface LogContext {
     [key: string]: any;
@@ -7,7 +8,7 @@ export interface LogContext {
 const createLogger = (level: string = 'info') => {
 
     let format = winston.format.combine(
-        winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
+        winston.format.timestamp({ format: DATE_FORMAT_YEAR_MONTH_DAY_HOURS_MINUTES_SECONDS }),
         winston.format.errors({ stack: true }),
         winston.format.splat(),
         winston.format.json()
@@ -46,7 +47,7 @@ const createLogger = (level: string = 'info') => {
     return winston.createLogger({
         level,
         format,
-        defaultMeta: { service: 'gmail-export' },
+        defaultMeta: { service: PROGRAM_NAME },
         transports,
     });
 };

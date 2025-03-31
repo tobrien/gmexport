@@ -1,16 +1,21 @@
-import * as fs from 'fs';
 import { OAuth2Client } from 'google-auth-library';
 import { google } from 'googleapis';
 import * as path from 'path';
 import * as readline from 'readline';
 import { getLogger } from '../logging.js';
-import { Configuration } from '../types.js';
+import * as Storage from '../util/storage.js';
+import * as Export from '../export.js';
 
-export const create = (config: Configuration) => {
+export interface Instance {
+    authorize: () => Promise<OAuth2Client>;
+}
+
+export const create = async (config: Export.Config): Promise<Instance> => {
     const logger = getLogger();
+    const storage = Storage.create({});
 
     async function authorize(): Promise<OAuth2Client> {
-        const credentials = JSON.parse(fs.readFileSync(path.join(config.credentials.credentials_file), 'utf-8'));
+        const credentials = JSON.parse(await storage.readFile(path.join(config.credentialsFile), 'utf-8'));
         const { client_secret, client_id, redirect_uris } = credentials.installed;
 
         const oAuth2Client = new google.auth.OAuth2(
@@ -20,7 +25,7 @@ export const create = (config: Configuration) => {
         );
 
         try {
-            const token = fs.readFileSync(path.join(config.credentials.token_file), 'utf-8');
+            const token = await storage.readFile(path.join(config.tokenFile), 'utf-8');
             oAuth2Client.setCredentials(JSON.parse(token));
             return oAuth2Client;
             // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -32,7 +37,7 @@ export const create = (config: Configuration) => {
     async function getNewToken(oAuth2Client: OAuth2Client): Promise<OAuth2Client> {
         const authUrl = oAuth2Client.generateAuthUrl({
             access_type: 'offline',
-            scope: config.api.scopes,
+            scope: config.apiScopes,
         });
 
         logger.info('Please authorize this app by visiting this URL: %s', authUrl);
@@ -50,7 +55,7 @@ export const create = (config: Configuration) => {
 
         const { tokens } = await oAuth2Client.getToken(code);
         oAuth2Client.setCredentials(tokens);
-        fs.writeFileSync(path.join(config.credentials.token_file), JSON.stringify(tokens));
+        await storage.writeFile(path.join(config.tokenFile), JSON.stringify(tokens), 'utf-8');
         return oAuth2Client;
     }
 

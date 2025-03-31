@@ -14,10 +14,10 @@ const originalConsole = { ...console };
 jest.setTimeout(30000);
 
 // Suppress console output during tests but keep errors for debugging
-console.log = jest.fn();
-console.info = jest.fn();
-console.warn = jest.fn();
-console.error = originalConsole.error;
+// console.log = jest.fn();
+// console.info = jest.fn();
+// console.warn = jest.fn();
+// console.error = originalConsole.error;
 
 // Export function to restore console if needed in tests
 export function restoreConsole() {

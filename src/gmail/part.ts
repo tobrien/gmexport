@@ -1,4 +1,3 @@
-import dayjs from 'dayjs';
 import * as GmailApi from './api.js';
 import { saveAttachment } from './attachment.js';
 
@@ -10,7 +9,8 @@ export async function processMessagePart(
     destinationDir: string,
     date: Date,
     subject: string,
-    dryRun: boolean
+    dryRun: boolean,
+    timezone: string
 ): Promise<{ body?: string, mimeType?: string, attachments: string[] }> {
     const attachments: string[] = [];
     let body: string | undefined;
@@ -31,9 +31,10 @@ export async function processMessagePart(
             part.body.attachmentId,
             filename,
             destinationDir,
-            dayjs(date),
+            date,
             subject,
-            dryRun
+            dryRun,
+            timezone
         );
         attachments.push(attachmentPath);
     }
@@ -44,7 +45,7 @@ export async function processMessagePart(
         let plainContent: { body: string, mimeType: string } | undefined;
 
         for (const subPart of part.parts) {
-            const result = await processMessagePart(api, userId, messageId, subPart, destinationDir, date, subject, dryRun);
+            const result = await processMessagePart(api, userId, messageId, subPart, destinationDir, date, subject, dryRun, timezone);
             if (result.body && result.mimeType) {
                 if (result.mimeType === 'text/html') {
                     htmlContent = { body: result.body, mimeType: result.mimeType };

@@ -1,0 +1,2094 @@
+diff --git a/eslint.config.mjs b/eslint.config.mjs
+index 7b4bc26..5b88502 100644
+--- a/eslint.config.mjs
++++ b/eslint.config.mjs
+@@ -69,5 +69,15 @@ export default defineConfig([
+             }],
+ 
+             "no-console": ["error"],
++
++            "no-restricted-imports": ["error", {
++                paths: ["dayjs", "fs", "moment-timezone"],
++                patterns: [
++                    {
++                        group: ["src/**"],
++                        message: "Use absolute imports instead of relative imports"
++                    }
++                ]
++            }]
+         },
+     }]);
+\ No newline at end of file
+diff --git a/jest.config.js b/jest.config.js
+index 5617d30..4164deb 100644
+--- a/jest.config.js
++++ b/jest.config.js
+@@ -23,14 +23,15 @@ export default {
+     testTimeout: 30000,
+     setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
+     collectCoverage: true,
++    collectCoverageFrom: ['src/**/*.ts'],
+     coverageDirectory: 'coverage',
+     coverageReporters: ['text', 'lcov', 'html'],
+     coverageThreshold: {
+         global: {
+-            branches: 43,
+-            functions: 48,
+-            lines: 43,
+-            statements: 44
++            statements: 76,
++            branches: 71,
++            functions: 88,
++            lines: 76,
+         }
+     },
+     verbose: true,
+@@ -40,7 +41,6 @@ export default {
+     },
+     rootDir: '.',
+     moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
+-    resolver: undefined,
+     transformIgnorePatterns: [
+         'node_modules/(?!(dayjs)/)'
+     ]
+diff --git a/package-lock.json b/package-lock.json
+index a6c5e9c..6461428 100644
+--- a/package-lock.json
++++ b/package-lock.json
+@@ -22,6 +22,7 @@
+                 "googleapis": "^148.0.0",
+                 "js-yaml": "^4.1.0",
+                 "luxon": "^3.5.0",
++                "moment-timezone": "^0.5.48",
+                 "turndown": "^7.1.2",
+                 "winston": "^3.17.0",
+                 "yaml": "^2.7.0"
+@@ -35,6 +36,7 @@
+                 "@types/jest": "^29.5.14",
+                 "@types/js-yaml": "^4.0.9",
+                 "@types/luxon": "^3.4.2",
++                "@types/mockdate": "^3.0.0",
+                 "@types/node": "^22.13.14",
+                 "@types/turndown": "^5.0.5",
+                 "@types/winston": "^2.4.4",
+@@ -44,6 +46,7 @@
+                 "eslint-plugin-import": "^2.31.0",
+                 "globals": "^16.0.0",
+                 "jest": "^29.7.0",
++                "mockdate": "^3.0.5",
+                 "nodemon": "^3.1.9",
+                 "ts-jest": "^29.2.6",
+                 "typescript": "^5.3.3"
+@@ -1531,6 +1534,16 @@
+             "integrity": "sha512-TifLZlFudklWlMBfhubvgqTXRzLDI5pCbGa4P8a3wPyUQSW+1xQ5eDsreP9DWHX3tjq1ke96uYG/nwundroWcA==",
+             "dev": true
+         },
++        "node_modules/@types/mockdate": {
++            "version": "3.0.0",
++            "resolved": "https://registry.npmjs.org/@types/mockdate/-/mockdate-3.0.0.tgz",
++            "integrity": "sha512-p2mDrXSBlcpz1JFRTzeF12g4yGpHgh8HKoOWUw6gE/+W/s+oXPfip/n1Z+qLyE7wU1NSWCslexEEd1FAlNCWPQ==",
++            "deprecated": "This is a stub types definition. mockdate provides its own type definitions, so you do not need this installed.",
++            "dev": true,
++            "dependencies": {
++                "mockdate": "*"
++            }
++        },
+         "node_modules/@types/node": {
+             "version": "22.13.14",
+             "resolved": "https://registry.npmjs.org/@types/node/-/node-22.13.14.tgz",
+@@ -6043,6 +6056,31 @@
+                 "node": ">=16 || 14 >=14.17"
+             }
+         },
++        "node_modules/mockdate": {
++            "version": "3.0.5",
++            "resolved": "https://registry.npmjs.org/mockdate/-/mockdate-3.0.5.tgz",
++            "integrity": "sha512-iniQP4rj1FhBdBYS/+eQv7j1tadJ9lJtdzgOpvsOHng/GbcDh2Fhdeq+ZRldrPYdXvCyfFUmFeEwEGXZB5I/AQ==",
++            "dev": true
++        },
++        "node_modules/moment": {
++            "version": "2.30.1",
++            "resolved": "https://registry.npmjs.org/moment/-/moment-2.30.1.tgz",
++            "integrity": "sha512-uEmtNhbDOrWPFS+hdjFCBfy9f2YoyzRpwcl+DqpC6taX21FzsTLQVbMV/W7PzNSX6x/bhC1zA3c2UQ5NzH6how==",
++            "engines": {
++                "node": "*"
++            }
++        },
++        "node_modules/moment-timezone": {
++            "version": "0.5.48",
++            "resolved": "https://registry.npmjs.org/moment-timezone/-/moment-timezone-0.5.48.tgz",
++            "integrity": "sha512-f22b8LV1gbTO2ms2j2z13MuPogNoh5UzxL3nzNAYKGraILnbGc9NEE6dyiiiLv46DGRb8A4kg8UKWLjPthxBHw==",
++            "dependencies": {
++                "moment": "^2.29.4"
++            },
++            "engines": {
++                "node": "*"
++            }
++        },
+         "node_modules/ms": {
+             "version": "2.1.3",
+             "resolved": "https://registry.npmjs.org/ms/-/ms-2.1.3.tgz",
+diff --git a/package.json b/package.json
+index ed4996d..c862607 100644
+--- a/package.json
++++ b/package.json
+@@ -39,6 +39,7 @@
+         "googleapis": "^148.0.0",
+         "js-yaml": "^4.1.0",
+         "luxon": "^3.5.0",
++        "moment-timezone": "^0.5.48",
+         "turndown": "^7.1.2",
+         "winston": "^3.17.0",
+         "yaml": "^2.7.0"
+@@ -49,6 +50,7 @@
+         "@types/jest": "^29.5.14",
+         "@types/js-yaml": "^4.0.9",
+         "@types/luxon": "^3.4.2",
++        "@types/mockdate": "^3.0.0",
+         "@types/node": "^22.13.14",
+         "@types/turndown": "^5.0.5",
+         "@types/winston": "^2.4.4",
+@@ -58,6 +60,7 @@
+         "eslint-plugin-import": "^2.31.0",
+         "globals": "^16.0.0",
+         "jest": "^29.7.0",
++        "mockdate": "^3.0.5",
+         "nodemon": "^3.1.9",
+         "ts-jest": "^29.2.6",
+         "typescript": "^5.3.3"
+diff --git a/src/MessageWrapper.ts b/src/MessageWrapper.ts
+deleted file mode 100644
+index 11dc849..0000000
+--- a/src/MessageWrapper.ts
++++ /dev/null
+@@ -1,70 +0,0 @@
+-import { gmail_v1 } from 'googleapis';
+-import { MessageHeaders } from './types.js';
+-
+-// Wrapper class to make header access more ergonomic
+-export default class MessageWrapper {
+-    private headers: MessageHeaders;
+-    private rawMessage: gmail_v1.Schema$Message;
+-
+-    constructor(message: gmail_v1.Schema$Message) {
+-        this.rawMessage = message;
+-        this.headers = this.extractHeaders(message);
+-    }
+-
+-    private extractHeaders(message: gmail_v1.Schema$Message): MessageHeaders {
+-        const headers = message.payload?.headers;
+-        if (!headers) {
+-            throw new Error('Message is missing headers');
+-        }
+-        const date = this.findHeader(headers, 'Date');
+-        if (!date) {
+-            throw new Error('Message is missing Date header');
+-        }
+-        const from = this.findHeader(headers, 'From');
+-        if (!from) {
+-            throw new Error('Message is missing From header');
+-        }
+-        const messageId = this.findHeader(headers, 'Message-ID');
+-        const to = this.findHeader(headers, 'To');
+-        const subject = this.findHeader(headers, 'Subject');
+-        const deliveredTo = this.findHeader(headers, 'Delivered-To');
+-        const replyTo = this.findHeader(headers, 'Reply-To');
+-        const contentType = this.findHeader(headers, 'Content-Type');
+-        const cc = this.findHeader(headers, 'Cc');
+-        const bcc = this.findHeader(headers, 'Bcc');
+-
+-        return {
+-            messageId,
+-            date,
+-            from,
+-            to,
+-            subject,
+-            deliveredTo,
+-            replyTo,
+-            contentType,
+-            cc,
+-            bcc,
+-        };
+-    }
+-
+-    private findHeader(headers: gmail_v1.Schema$MessagePartHeader[], name: string): string | undefined {
+-        const header = headers.find(h => h.name === name);
+-        return header?.value || undefined;
+-    }
+-    // Getters for headers
+-    get from(): string { return this.headers.from; }
+-    get to(): string | undefined { return this.headers.to; }
+-    get subject(): string | undefined { return this.headers.subject; }
+-    get date(): string { return this.headers.date!; }
+-    get messageId(): string { return this.headers.messageId!; }
+-    get deliveredTo(): string | undefined { return this.headers.deliveredTo; }
+-    get replyTo(): string | undefined { return this.headers.replyTo; }
+-    get contentType(): string | undefined { return this.headers.contentType; }
+-    get cc(): string | undefined { return this.headers.cc; }
+-    get bcc(): string | undefined { return this.headers.bcc; }
+-
+-    // Get the raw message for when we need it
+-    get raw(): gmail_v1.Schema$Message {
+-        return this.rawMessage;
+-    }
+-}
+\ No newline at end of file
+diff --git a/src/config.ts b/src/config.ts
+deleted file mode 100644
+index 2ad9c6a..0000000
+--- a/src/config.ts
++++ /dev/null
+@@ -1,95 +0,0 @@
+-import * as fs from 'fs';
+-import * as yaml from 'js-yaml';
+-import { getLogger } from './logging.js';
+-import { CommandLineArgs, Configuration, FilenameOption } from './types.js';
+-
+-// Internal default configuration values
+-export const DEFAULT_CREDENTIALS_FILE = './credentials.json';
+-export const DEFAULT_TOKEN_FILE = './token.json';
+-export const DEFAULT_MAX_RESULTS = 10000;
+-export const DEFAULT_DESTINATION_DIR = './exports';
+-export const DEFAULT_SCOPES = ['https://www.googleapis.com/auth/gmail.readonly'];
+-export const DEFAULT_OUTPUT_STRUCTURE = 'month';
+-export const DEFAULT_FILENAME_OPTIONS = ['date', 'time', 'subject'];
+-export const DEFAULT_TIMEZONE = 'America/New_York';
+-
+-// Utility function for deep merging two objects.
+-function deepMerge(target: any, source: any): any {
+-    for (const key in source) {
+-        if (Object.prototype.hasOwnProperty.call(source, key)) {
+-            if (source[key] && typeof source[key] === 'object' && !Array.isArray(source[key])) {
+-                if (!target[key]) {
+-                    target[key] = {};
+-                }
+-                deepMerge(target[key], source[key]);
+-            } else {
+-                target[key] = source[key];
+-            }
+-        }
+-    }
+-    return target;
+-}
+-
+-// Default configuration
+-const defaultConfig: Configuration = {
+-    credentials: {
+-        credentials_file: DEFAULT_CREDENTIALS_FILE,
+-        token_file: DEFAULT_TOKEN_FILE
+-    },
+-    export: {
+-        max_results: DEFAULT_MAX_RESULTS,
+-        destination_dir: DEFAULT_DESTINATION_DIR,
+-        dry_run: false,
+-        output_structure: DEFAULT_OUTPUT_STRUCTURE,
+-        filename_options: DEFAULT_FILENAME_OPTIONS as FilenameOption[],
+-        timezone: DEFAULT_TIMEZONE
+-    },
+-    api: {
+-        scopes: DEFAULT_SCOPES
+-    },
+-    filters: {
+-        exclude: {},
+-        include: {}
+-    }
+-};
+-
+-export function createConfiguration(args: CommandLineArgs): Configuration {
+-    const logger = getLogger();
+-    let config: Configuration = { ...defaultConfig };
+-
+-    // Override with command line arguments
+-    if (args.config) {
+-        try {
+-            const configFile = fs.readFileSync(args.config, 'utf8');
+-            const fileConfig = yaml.load(configFile);
+-            config = deepMerge(config, fileConfig);
+-        } catch (error: any) {
+-            logger.error('Error reading config file: %s %s', error.message, error.stack);
+-            process.exit(1);
+-        }
+-    }
+-
+-    // Override with command line arguments
+-    if (args.output) {
+-        config.export.destination_dir = args.output;
+-    }
+-
+-    if (args.dryRun) {
+-        config.export.dry_run = true;
+-    }
+-
+-    if (args.outputStructure) {
+-        if (!['year', 'month', 'day'].includes(args.outputStructure)) {
+-            logger.error('Invalid output structure. Must be one of: year, month, day');
+-            process.exit(1);
+-        }
+-        config.export.output_structure = args.outputStructure as 'year' | 'month' | 'day';
+-    }
+-
+-    // Handle filename options
+-    if (args.filenameOptions) {
+-        config.export.filename_options = args.filenameOptions.split(',') as FilenameOption[];
+-    }
+-
+-    return config;
+-}
+\ No newline at end of file
+diff --git a/src/filename.ts b/src/filename.ts
+index a41e2ab..5d7f360 100644
+--- a/src/filename.ts
++++ b/src/filename.ts
+@@ -1,29 +1,27 @@
+-import dayjs from 'dayjs';
+-import timezone from 'dayjs/plugin/timezone.js';
+-import utc from 'dayjs/plugin/utc.js';
+-import { Configuration } from './types.js';
+-
+-// Extend dayjs with plugins
+-dayjs.extend(utc);
+-dayjs.extend(timezone);
++import { DATE_FORMAT_DAY, DATE_FORMAT_MONTH_DAY, DATE_FORMAT_YEAR_MONTH_DAY } from './constants.js';
++import { FilenameOption, OutputStructure } from './export.d.js';
++import * as Dates from './util/dates.js';
+ 
+ export function formatFilename(
+     messageId: string,
+     date: Date,
+     subject: string,
+-    config: Configuration
++    timezone: string,
++    filenameOptions: FilenameOption[],
++    outputStructure: OutputStructure
+ ): string {
+     const parts: string[] = [];
+ 
+     // Add date if requested
+-    if (config.export.filename_options?.includes('date')) {
+-        const dateStr = formatDateForFilename(date, config.export.output_structure, config.export.timezone);
++    if (filenameOptions?.includes('date')) {
++        const dateStr = formatDateForFilename(date, outputStructure, timezone);
+         parts.push(dateStr);
+     }
+ 
+     // Add time if requested
+-    if (config.export.filename_options?.includes('time')) {
+-        const timeStr = dayjs(date).tz(config.export.timezone).format('HHmm');
++    if (filenameOptions?.includes('time')) {
++        const dates = Dates.create({ timezone });
++        const timeStr = dates.format(date, 'HHmm');
+         parts.push(timeStr);
+     }
+ 
+@@ -31,7 +29,7 @@ export function formatFilename(
+     parts.push(messageId);
+ 
+     // Add subject if requested
+-    if (config.export.filename_options?.includes('subject')) {
++    if (filenameOptions?.includes('subject')) {
+         const safeSubject = makeSubjectSafe(subject);
+         parts.push(safeSubject);
+     }
+@@ -39,12 +37,15 @@ export function formatFilename(
+     return parts.join('-') + '.eml';
+ }
+ 
+-function formatDateForFilename(date: Date, outputStructure: 'year' | 'month' | 'day', timezone: string): string {
++function formatDateForFilename(date: Date, outputStructure: 'none' | 'year' | 'month' | 'day', timezone: string): string {
++    const dates = Dates.create({ timezone });
+     switch (outputStructure) {
++        case 'none':
++            return dates.format(date, DATE_FORMAT_YEAR_MONTH_DAY);
+         case 'year':
+-            return dayjs(date).tz(timezone).format('MM-DD');
++            return dates.format(date, DATE_FORMAT_MONTH_DAY);
+         case 'month':
+-            return dayjs(date).tz(timezone).format('DD');
++            return dates.format(date, DATE_FORMAT_DAY);
+         case 'day':
+             throw new Error('Cannot use date in filename when output structure is "day"');
+     }
+diff --git a/src/filter.ts b/src/filter.ts
+index 2ca9b8a..b4f84b3 100644
+--- a/src/filter.ts
++++ b/src/filter.ts
+@@ -1,6 +1,7 @@
+-import MessageWrapper from './MessageWrapper.js';
+-import { Configuration } from './types.js';
+-export const create = (config: Configuration) => {
++import MessageWrapper from './gmail/MessageWrapper.js';
++import { Config as ExportConfig } from './export.d.js';
++
++export const create = (config: ExportConfig) => {
+ 
+     function checkInclusiveFilters(message: MessageWrapper): { skip: boolean; reason?: string } | null {
+ 
+@@ -10,7 +11,7 @@ export const create = (config: Configuration) => {
+         const labels = message.raw.labelIds;
+ 
+         // Check if any inclusive filters are defined
+-        if (config.filters.include.labels?.length || config.filters.include.from?.length || config.filters.include.to?.length || config.filters.include.subject?.length) {
++        if (config.filters?.include?.labels?.length || config.filters?.include?.from?.length || config.filters?.include?.to?.length || config.filters?.include?.subject?.length) {
+             let matches = false;
+ 
+             // Check from patterns
+@@ -19,7 +20,7 @@ export const create = (config: Configuration) => {
+             }
+ 
+             // Check subject patterns
+-            if (config.filters.include.subject?.length && config.filters.include.subject.some((pattern: string) => new RegExp(pattern, 'i').test(subject!))) {
++            if (config.filters?.include?.subject?.length && config.filters?.include?.subject.some((pattern: string) => new RegExp(pattern, 'i').test(subject!))) {
+                 matches = true;
+             }
+ 
+@@ -29,7 +30,7 @@ export const create = (config: Configuration) => {
+             }
+ 
+             // Check labels
+-            if (config.filters.include.labels?.length && labels?.some((label: string) => config.filters.include.labels?.includes(label))) {
++            if (config.filters?.include?.labels?.length && labels?.some((label: string) => config.filters?.include?.labels?.includes(label))) {
+                 matches = true;
+             }
+ 
+@@ -52,22 +53,22 @@ export const create = (config: Configuration) => {
+         const labels = message.raw.labelIds;
+ 
+         // Check from patterns
+-        if (config.filters.exclude.from && config.filters.exclude.from.some((pattern: string) => new RegExp(pattern, 'i').test(from!))) {
++        if (config.filters?.exclude?.from && config.filters?.exclude?.from.some((pattern: string) => new RegExp(pattern, 'i').test(from!))) {
+             return { skip: true, reason: 'Skipped sender pattern' };
+         }
+ 
+         // Check subject patterns
+-        if (config.filters.exclude.subject && config.filters.exclude.subject.some((pattern: string) => new RegExp(pattern, 'i').test(subject!))) {
++        if (config.filters?.exclude?.subject && config.filters?.exclude?.subject.some((pattern: string) => new RegExp(pattern, 'i').test(subject!))) {
+             return { skip: true, reason: 'Skipped subject pattern' };
+         }
+ 
+         // Check to patterns
+-        if (config.filters.exclude.to && config.filters.exclude.to.some((pattern: string) => new RegExp(pattern, 'i').test(to!))) {
++        if (config.filters?.exclude?.to && config.filters?.exclude?.to.some((pattern: string) => new RegExp(pattern, 'i').test(to!))) {
+             return { skip: true, reason: 'Skipped recipient pattern' };
+         }
+ 
+         // Check labels
+-        if (labels && labels.some((label: string) => config.filters.exclude.labels?.includes(label))) {
++        if (labels && labels.some((label: string) => config.filters?.exclude?.labels?.includes(label))) {
+             return { skip: true, reason: 'Skipped label' };
+         }
+ 
+diff --git a/src/gmail/attachment.ts b/src/gmail/attachment.ts
+index e70cc60..4445575 100644
+--- a/src/gmail/attachment.ts
++++ b/src/gmail/attachment.ts
+@@ -1,26 +1,31 @@
+-import dayjs from 'dayjs';
+-import * as fs from 'fs';
+ import { gmail_v1 } from 'googleapis';
+ import * as path from 'path';
++import * as Dates from '../util/dates.js';
+ import * as GmailApi from './api.js';
++import * as Storage from '../util/storage.js';
++import {
++    DEFAULT_BINARY_TO_TEXT_ENCODING,
++    DATE_FORMAT_DAY,
++    DATE_FORMAT_HOURS,
++    DATE_FORMAT_MINUTES,
++    DATE_FORMAT_MONTH,
++    DATE_FORMAT_YEAR,
++    DEFAULT_CHARACTER_ENCODING,
++} from '../constants.js';
+ 
+ export function sanitizeFilename(filename: string): string {
+     // Replace characters that are invalid in filenames
+     return filename.replace(/[<>:"/\\|?*]/g, '-');
+ }
+ 
+-export function ensureDirectoryExists(dirPath: string): void {
+-    if (!fs.existsSync(dirPath)) {
+-        fs.mkdirSync(dirPath, { recursive: true });
+-    }
+-}
+-
+-export function getAttachmentFilePath(baseDir: string, date: dayjs.Dayjs, subject: string, attachmentName: string): string {
+-    const year = date.year();
+-    const month = date.month() + 1; // getMonth() returns 0-11
+-    const day = date.date();
+-    const hours = date.hour().toString().padStart(2, '0');
+-    const minutes = date.minute().toString().padStart(2, '0');
++export function getAttachmentFilePath(baseDir: string, date: Date, subject: string, attachmentName: string, timezone: string): string {
++    const storage = Storage.create({});
++    const dates = Dates.create({ timezone });
++    const year = dates.format(date, DATE_FORMAT_YEAR);
++    const month = dates.format(date, DATE_FORMAT_MONTH);
++    const day = dates.format(date, DATE_FORMAT_DAY);
++    const hours = dates.format(date, DATE_FORMAT_HOURS);
++    const minutes = dates.format(date, DATE_FORMAT_MINUTES);
+ 
+     // Get the file extension from the attachment name
+     const attachmentExt = path.extname(attachmentName);
+@@ -34,7 +39,7 @@ export function getAttachmentFilePath(baseDir: string, date: dayjs.Dayjs, subjec
+ 
+     // Store attachments under year/month/attachments instead of a separate top-level attachments directory
+     const attachmentDir = path.join(baseDir, year.toString(), month.toString(), 'attachments');
+-    ensureDirectoryExists(attachmentDir);
++    storage.createDirectory(attachmentDir);
+ 
+     return path.join(attachmentDir, filename);
+ }
+@@ -47,10 +52,12 @@ export async function saveAttachment(
+     attachmentId: string,
+     filename: string,
+     destinationDir: string,
+-    date: dayjs.Dayjs,
++    date: Date,
+     subject: string,
+-    dryRun: boolean
++    dryRun: boolean,
++    timezone: string
+ ): Promise<string> {
++    const storage = Storage.create({});
+     const attachment: gmail_v1.Schema$MessagePartBody | null = await api.getAttachment({
+         userId,
+         messageId,
+@@ -65,11 +72,11 @@ export async function saveAttachment(
+         throw new Error('Attachment data is null');
+     }
+ 
+-    const data = Buffer.from(attachment.data, 'base64');
+-    const attachmentPath = getAttachmentFilePath(destinationDir, date, subject, filename);
++    const data = Buffer.from(attachment.data, DEFAULT_BINARY_TO_TEXT_ENCODING);
++    const attachmentPath = getAttachmentFilePath(destinationDir, date, subject, filename, timezone);
+ 
+     if (!dryRun) {
+-        fs.writeFileSync(attachmentPath, data);
++        await storage.writeFile(attachmentPath, data, DEFAULT_CHARACTER_ENCODING);
+     }
+     return attachmentPath;
+ }
+\ No newline at end of file
+diff --git a/src/gmail/auth.ts b/src/gmail/auth.ts
+index cc3ba66..a2cf8f3 100644
+--- a/src/gmail/auth.ts
++++ b/src/gmail/auth.ts
+@@ -1,16 +1,21 @@
+-import * as fs from 'fs';
+ import { OAuth2Client } from 'google-auth-library';
+ import { google } from 'googleapis';
+ import * as path from 'path';
+ import * as readline from 'readline';
+ import { getLogger } from '../logging.js';
+-import { Configuration } from '../types.js';
++import * as Storage from '../util/storage.js';
++import * as Export from '../export.js';
+ 
+-export const create = (config: Configuration) => {
++export interface Instance {
++    authorize: () => Promise<OAuth2Client>;
++}
++
++export const create = async (config: Export.Config): Promise<Instance> => {
+     const logger = getLogger();
++    const storage = Storage.create({});
+ 
+     async function authorize(): Promise<OAuth2Client> {
+-        const credentials = JSON.parse(fs.readFileSync(path.join(config.credentials.credentials_file), 'utf-8'));
++        const credentials = JSON.parse(await storage.readFile(path.join(config.credentialsFile), 'utf-8'));
+         const { client_secret, client_id, redirect_uris } = credentials.installed;
+ 
+         const oAuth2Client = new google.auth.OAuth2(
+@@ -20,7 +25,7 @@ export const create = (config: Configuration) => {
+         );
+ 
+         try {
+-            const token = fs.readFileSync(path.join(config.credentials.token_file), 'utf-8');
++            const token = await storage.readFile(path.join(config.tokenFile), 'utf-8');
+             oAuth2Client.setCredentials(JSON.parse(token));
+             return oAuth2Client;
+             // eslint-disable-next-line @typescript-eslint/no-unused-vars
+@@ -32,7 +37,7 @@ export const create = (config: Configuration) => {
+     async function getNewToken(oAuth2Client: OAuth2Client): Promise<OAuth2Client> {
+         const authUrl = oAuth2Client.generateAuthUrl({
+             access_type: 'offline',
+-            scope: config.api.scopes,
++            scope: config.apiScopes,
+         });
+ 
+         logger.info('Please authorize this app by visiting this URL: %s', authUrl);
+@@ -50,7 +55,7 @@ export const create = (config: Configuration) => {
+ 
+         const { tokens } = await oAuth2Client.getToken(code);
+         oAuth2Client.setCredentials(tokens);
+-        fs.writeFileSync(path.join(config.credentials.token_file), JSON.stringify(tokens));
++        await storage.writeFile(path.join(config.tokenFile), JSON.stringify(tokens), 'utf-8');
+         return oAuth2Client;
+     }
+ 
+diff --git a/src/gmail/part.ts b/src/gmail/part.ts
+index 8e09012..5a8ae55 100644
+--- a/src/gmail/part.ts
++++ b/src/gmail/part.ts
+@@ -1,4 +1,3 @@
+-import dayjs from 'dayjs';
+ import * as GmailApi from './api.js';
+ import { saveAttachment } from './attachment.js';
+ 
+@@ -10,7 +9,8 @@ export async function processMessagePart(
+     destinationDir: string,
+     date: Date,
+     subject: string,
+-    dryRun: boolean
++    dryRun: boolean,
++    timezone: string
+ ): Promise<{ body?: string, mimeType?: string, attachments: string[] }> {
+     const attachments: string[] = [];
+     let body: string | undefined;
+@@ -31,9 +31,10 @@ export async function processMessagePart(
+             part.body.attachmentId,
+             filename,
+             destinationDir,
+-            dayjs(date),
++            date,
+             subject,
+-            dryRun
++            dryRun,
++            timezone
+         );
+         attachments.push(attachmentPath);
+     }
+@@ -44,7 +45,7 @@ export async function processMessagePart(
+         let plainContent: { body: string, mimeType: string } | undefined;
+ 
+         for (const subPart of part.parts) {
+-            const result = await processMessagePart(api, userId, messageId, subPart, destinationDir, date, subject, dryRun);
++            const result = await processMessagePart(api, userId, messageId, subPart, destinationDir, date, subject, dryRun, timezone);
+             if (result.body && result.mimeType) {
+                 if (result.mimeType === 'text/html') {
+                     htmlContent = { body: result.body, mimeType: result.mimeType };
+diff --git a/src/gmail/query.ts b/src/gmail/query.ts
+index 890f9b9..f584f45 100644
+--- a/src/gmail/query.ts
++++ b/src/gmail/query.ts
+@@ -1,27 +1,28 @@
+-import dayjs from 'dayjs';
+ import { getLogger } from '../logging.js';
+-import { Configuration, DateRange } from '../types.js';
++import * as Export from '../export.js';
++import * as Run from '../run.js';
++import * as Dates from '../util/dates.js';
++import { DATE_FORMAT_YEAR_MONTH_DAY_SLASH } from '../constants.js';
+ 
++export function createQuery(dateRange: Run.DateRange, config: Export.Config, timezone: string): string {
++    const dates = Dates.create({ timezone });
++    const afterDate = dates.format(dateRange.start, DATE_FORMAT_YEAR_MONTH_DAY_SLASH);
+ 
+-export function formatDateForGmailQuery(date: Date): string {
+-    return dayjs(date).format('YYYY/MM/DD');
+-}
+-export function createQuery(dateRange: DateRange, config: Configuration): string {
+-    const afterDate = formatDateForGmailQuery(dateRange.start);
+     // Add one day to end date to make the range inclusive
+-    const adjustedEndDate = dayjs(dateRange.end).add(1, 'day');
+-    const beforeDate = formatDateForGmailQuery(adjustedEndDate.toDate());
++    const adjustedEndDate = dates.addDays(dateRange.end, 1);
++    const beforeDate = dates.format(adjustedEndDate, DATE_FORMAT_YEAR_MONTH_DAY_SLASH);
++
+ 
+     // Construct Gmail search query
+     let query = `after:${afterDate} before:${beforeDate}`;
+-    if (config.filters.include.labels && config.filters.include.labels.length > 0) {
++    if (config.filters?.include?.labels && config.filters.include.labels.length > 0) {
+         query += ` label:${config.filters.include.labels.join(' OR label:')}`;
+     }
+-    if (config.filters.exclude.labels && config.filters.exclude.labels.length > 0) {
++    if (config.filters?.exclude?.labels && config.filters.exclude.labels.length > 0) {
+         query += ` -label:${config.filters.exclude.labels.join(' AND -label:')}`;
+     }
+ 
+-    printGmailQueryInfo(afterDate, beforeDate, config.filters.include.labels || [], config.filters.exclude.labels || [], query);
++    printGmailQueryInfo(afterDate, beforeDate, config.filters?.include?.labels || [], config.filters?.exclude?.labels || [], query);
+     return query;
+ }
+ 
+diff --git a/src/gmailExport.ts b/src/gmailExport.ts
+index a43b5fe..9294e4b 100644
+--- a/src/gmailExport.ts
++++ b/src/gmailExport.ts
+@@ -1,21 +1,17 @@
+-import * as fs from 'fs';
+ import { gmail_v1 } from 'googleapis';
+ import * as path from 'path';
++import { DATE_FORMAT_DAY, DATE_FORMAT_MONTH, DATE_FORMAT_YEAR, DEFAULT_CHARACTER_ENCODING } from './constants.js';
++import { Config as ExportConfig, FilenameOption, OutputStructure } from './export.d.js';
++import * as Filename from './filename.js';
+ import * as Filter from './filter.js';
+ import * as GmailApi from './gmail/api.js';
++import MessageWrapper from './gmail/MessageWrapper.js';
+ import { createQuery } from './gmail/query.js';
+ import { getLogger } from './logging.js';
+-import { Configuration, DateRange } from './types.js';
+-import dayjs from 'dayjs';
+-import * as Filename from './filename.js';
+-import MessageWrapper from './MessageWrapper.js';
+-
+-// Import dayjs plugins
+-const utc = await import('dayjs/plugin/utc.js');
+-const timezone = await import('dayjs/plugin/timezone.js');
+-
+-dayjs.extend(utc.default);
+-dayjs.extend(timezone.default);
++import * as Run from './run.js';
++import { DateRange } from './run.js';
++import * as Dates from './util/dates.js';
++import * as Storage from './util/storage.js';
+ 
+ export interface Instance {
+     exportEmails: (dateRange: DateRange) => Promise<void>;
+@@ -24,35 +20,40 @@ export interface Instance {
+     printExportSummary: (messages: any, processedCount: number, skippedCount: number, filteredCount: number, attachmentCount: number, dryRun: boolean) => void;
+ }
+ 
+-function ensureDirectoryExists(dirPath: string): void {
+-    if (!fs.existsSync(dirPath)) {
+-        fs.mkdirSync(dirPath, { recursive: true });
+-    }
+-}
+-
+-function getEmailFilePath(baseDir: string, messageId: string, dateHeader: string, outputStructure: 'year' | 'month' | 'day', subject: string, config: Configuration): string {
+-    const date = dayjs(dateHeader);
+-    const year = date.year();
+-    const month = date.format('MM');
+-    const day = date.format('DD');
++function getEmailFilePath(
++    baseDir: string,
++    messageId: string,
++    dateHeader: string,
++    outputStructure: OutputStructure,
++    subject: string,
++    timezone: string,
++    filenameOptions: FilenameOption[],
++): string {
++    const dates = Dates.create({ timezone });
++    const storage = Storage.create({});
++
++    const date = dates.date(dateHeader);
++    const year = dates.format(date, DATE_FORMAT_YEAR);
++    const month = dates.format(date, DATE_FORMAT_MONTH);
++    const day = dates.format(date, DATE_FORMAT_DAY);
+ 
+     let dirPath: string;
+     switch (outputStructure) {
+         case 'year':
+-            dirPath = path.join(baseDir, year.toString());
++            dirPath = path.join(baseDir, year);
+             break;
+         case 'month':
+-            dirPath = path.join(baseDir, year.toString(), month);
++            dirPath = path.join(baseDir, year, month);
+             break;
+         case 'day':
+-            dirPath = path.join(baseDir, year.toString(), month, day);
++            dirPath = path.join(baseDir, year, month, day);
+             break;
+         default:
+             dirPath = baseDir;
+     }
+ 
+-    ensureDirectoryExists(dirPath);
+-    const filename = Filename.formatFilename(messageId, date.toDate(), subject, config);
++    storage.createDirectory(dirPath);
++    const filename = Filename.formatFilename(messageId, date, subject, timezone, filenameOptions, outputStructure);
+     return path.join(dirPath, filename);
+ }
+ 
+@@ -83,10 +84,11 @@ function foldHeaderLine(name: string, value: string): string {
+     return result;
+ }
+ 
+-export const create = (config: Configuration, api: GmailApi.Instance): Instance => {
++export const create = (runConfig: Run.Config, exportConfig: ExportConfig, api: GmailApi.Instance): Instance => {
+     const logger = getLogger();
+-    const filter = Filter.create(config);
++    const filter = Filter.create(exportConfig);
+     const userId = 'me';
++    const storage = Storage.create({});
+ 
+     let processedCount = 0;
+     let skippedCount = 0;
+@@ -122,16 +124,17 @@ export const create = (config: Configuration, api: GmailApi.Instance): Instance
+             }
+ 
+             const filePath = getEmailFilePath(
+-                config.export.destination_dir,
++                exportConfig.outputDirectory,
+                 messageId!,
+                 wrappedMessage.date,
+-                config.export.output_structure,
++                exportConfig.outputStructure,
+                 wrappedMessage.subject || 'No Subject',
+-                config
++                runConfig.timezone,
++                exportConfig.filenameOptions
+             );
+ 
+             // Skip if file already exists
+-            if (fs.existsSync(filePath)) {
++            if (await storage.exists(filePath)) {
+                 logger.debug('Skipping existing file: %s', filePath);
+                 skippedCount++;
+                 return;
+@@ -155,7 +158,7 @@ export const create = (config: Configuration, api: GmailApi.Instance): Instance
+             ].join('\n');
+ 
+             const rowMessage = Buffer.from(messageRaw.raw!, 'base64').toString('utf-8');
+-            fs.writeFileSync(filePath, gmExportHeaders + '\n' + rowMessage);
++            await storage.writeFile(filePath, gmExportHeaders + '\n' + rowMessage, DEFAULT_CHARACTER_ENCODING);
+             logger.info('Exported email: %s', filePath);
+             processedCount++;
+         } catch (error) {
+@@ -166,8 +169,8 @@ export const create = (config: Configuration, api: GmailApi.Instance): Instance
+ 
+     async function exportEmails(dateRange: DateRange): Promise<void> {
+         try {
+-            const query = createQuery(dateRange, config);
+-            await api.listMessages({ userId, q: query, maxResults: config.export.max_results }, async (messageBatch) => {
++            const query = createQuery(dateRange, exportConfig, runConfig.timezone);
++            await api.listMessages({ userId, q: query }, async (messageBatch) => {
+                 logger.info('Processing %d messages', messageBatch.length);
+                 // Process all messages in the batch concurrently
+                 await Promise.all(messageBatch.map(message => processMessage(message)));
+@@ -175,7 +178,7 @@ export const create = (config: Configuration, api: GmailApi.Instance): Instance
+ 
+             printExportSummary();
+ 
+-            if (config.export.dry_run) {
++            if (runConfig.dryRun) {
+                 logger.info('This was a dry run. No files were actually saved.');
+             }
+         } catch (error: any) {
+@@ -191,7 +194,7 @@ export const create = (config: Configuration, api: GmailApi.Instance): Instance
+         logger.info(`\tSkipped (already exists): ${skippedCount}`);
+         logger.info(`\tFiltered out: ${filteredCount}`);
+         logger.info(`\tErrors: ${errorCount}`);
+-        logger.info(`\tDry run mode: ${config.export.dry_run ? 'Yes' : 'No'}`);
++        logger.info(`\tDry run mode: ${runConfig.dryRun ? 'Yes' : 'No'}`);
+     }
+ 
+     return {
+diff --git a/src/logging.ts b/src/logging.ts
+index 89d8a4d..78b884d 100644
+--- a/src/logging.ts
++++ b/src/logging.ts
+@@ -1,4 +1,5 @@
+ import winston from 'winston';
++import { DATE_FORMAT_YEAR_MONTH_DAY_HOURS_MINUTES_SECONDS, PROGRAM_NAME } from './constants.js';
+ 
+ export interface LogContext {
+     [key: string]: any;
+@@ -7,7 +8,7 @@ export interface LogContext {
+ const createLogger = (level: string = 'info') => {
+ 
+     let format = winston.format.combine(
+-        winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss' }),
++        winston.format.timestamp({ format: DATE_FORMAT_YEAR_MONTH_DAY_HOURS_MINUTES_SECONDS }),
+         winston.format.errors({ stack: true }),
+         winston.format.splat(),
+         winston.format.json()
+@@ -46,7 +47,7 @@ const createLogger = (level: string = 'info') => {
+     return winston.createLogger({
+         level,
+         format,
+-        defaultMeta: { service: 'gmail-export' },
++        defaultMeta: { service: PROGRAM_NAME },
+         transports,
+     });
+ };
+diff --git a/src/main.ts b/src/main.ts
+index 51b4ac1..c2fb4aa 100644
+--- a/src/main.ts
++++ b/src/main.ts
+@@ -1,204 +1,79 @@
+ #!/usr/bin/env node
+ import { Command } from 'commander';
+-import dayjs from 'dayjs';
+-import * as Config from './config.js';
+-import * as GmailExport from './gmailExport.js';
++import * as Arguments from './arguments.js';
+ import * as GmailApi from './gmail/api.js';
+ import * as Auth from './gmail/auth.js';
++import * as GmailExport from './gmailExport.js';
+ import { getLogger, setLogLevel } from './logging.js';
+-import { CommandLineArgs, Configuration, DateRange } from './types.js';
+-import * as fs from 'fs';
++import * as Run from './run.js';
++import * as Export from './export.js';
+ import { Logger } from 'winston';
+-
+-export const DEFAULT_CONFIG_FILE = './config.yaml';
+-export const DEFAULT_OUTPUT_DIR = './exports';
+-
+-// Get date 31 days ago in YYYY-MM-DD format
+-export const DEFAULT_START_DATE = dayjs().subtract(31, 'day').format('YYYY-MM-DD');
+-export const DEFAULT_END_DATE = dayjs().format('YYYY-MM-DD');
+-
++import { Config as ExportConfig } from './export.d.js';
+ export async function main() {
+     const program = new Command();
+-
+-    program
+-        .name('gmail-export')
+-        .description('Export Gmail messages within a date range to local files')
+-        .option('-c, --config <path>', 'Path to configuration file')
+-        .option('-o, --output <path>', 'destination directory for exported emails')
+-        .option('-s, --start <date>', 'start date (YYYY-MM-DD). If omitted, defaults to 31 days before end date')
+-        .option('-e, --end <date>', 'end date (YYYY-MM-DD). If omitted, defaults to current date')
+-        .option('--current-month', 'export emails from the first day of the current month to today')
+-        .option('--dry-run', 'perform a dry run without saving files', false)
+-        .option('-v, --verbose', 'enable debug logging', false)
+-        .option('--output-structure <type>', 'output directory structure (year/month/day)', 'month')
+-        .option('--filename-options <options>', 'filename format options (comma-separated list of: date,time,subject)', 'day,subject')
+-        .version('1.0.0');
+-
++    Arguments.configure(program);
+     program.parse();
+ 
+-    const options: CommandLineArgs = program.opts();
+-    const destinationDir = options.output;
++    const options: Arguments.Input = program.opts();
+ 
+     // Set log level based on verbose flag
+     if (options.verbose) {
+         setLogLevel('debug');
+     }
+-
+     const logger = getLogger();
++    const { exportConfig, runConfig }: { exportConfig: ExportConfig; runConfig: Run.Config; } = await configure(options, logger);
++    const gmail: GmailExport.Instance = await connect(exportConfig, runConfig, logger);
+ 
+-    // Validate filename options if provided
+-    if (options.filenameOptions && Array.isArray(options.filenameOptions)) {
+-        const validOptions = ['date', 'time', 'subject'];
+-        const invalidOptions = options.filenameOptions.filter(opt => !validOptions.includes(opt));
+-        if (invalidOptions.length > 0) {
+-            logger.error('Invalid filename options: %s. Valid options are: %s', invalidOptions.join(', '), validOptions.join(', '));
+-            process.exit(1);
+-        }
++    await exportEmails(gmail, runConfig, logger);
++}
+ 
+-        // Validate date option against output structure
+-        if (options.filenameOptions.includes('date')) {
+-            if (options.outputStructure === 'day') {
+-                logger.error('Cannot use date in filename when output structure is "day"');
+-                process.exit(1);
+-            }
+-        }
+-    }
++main();
+ 
+-    // Validate that --current-month is not used with other date options
+-    if (options.currentMonth && (options.start || options.end)) {
+-        logger.error('--current-month cannot be used together with --start or --end options');
++export async function exportEmails(gmail: GmailExport.Instance, runConfig: Run.Config, logger: Logger) {
++    try {
++        await gmail.exportEmails(runConfig.dateRange);
++    } catch (error: any) {
++        logger.error('Error occurred during export phase: %s %s', error.message, error.stack);
+         process.exit(1);
+     }
++}
+ 
+-    // Verify config file exists and is readable if specified
+-    if (options.config) {
+-        try {
+-            await fs.promises.access(options.config, fs.constants.R_OK);
+-        } catch (error: any) {
+-            logger.error(`Config file ${options.config} does not exist or is not readable: %s %s`, error.message, error.stack);
+-            process.exit(1);
+-        }
+-    }
+-
+-    // Verify output directory exists and is writable
+-    if (destinationDir) {
+-        try {
+-            const stats = await fs.promises.stat(destinationDir);
+-            if (!stats.isDirectory()) {
+-                logger.error(`Output path ${destinationDir} exists but is not a directory`);
+-                process.exit(1);
+-            }
+-            await fs.promises.access(destinationDir, fs.constants.W_OK);
+-        } catch (error: any) {
+-            if (error.code === 'ENOENT') {
+-                try {
+-                    await fs.promises.mkdir(destinationDir, { recursive: true });
+-                    logger.info(`Created output directory ${destinationDir}`);
+-                } catch (mkdirError: any) {
+-                    logger.error(`Failed to create output directory ${destinationDir}: %s %s`, mkdirError.message, mkdirError.stack);
+-                    process.exit(1);
+-                }
+-            } else {
+-                logger.error(`Output directory ${destinationDir} is not writable: %s %s`, error.message, error.stack);
+-                process.exit(1);
+-            }
+-        }
+-    }
++export async function connect(exportConfig: ExportConfig, runConfig: Run.Config, logger: Logger) {
++    let gmail: GmailExport.Instance;
+ 
+     try {
+-        const dateRange = calculateDateRange(options);
+-
+-        logExportConfiguration(options, dateRange, logger);
+-
+-        const config = Config.createConfiguration(options);
+-
+-        // Print configuration details
+-        logDetailedConfiguration(config, logger);
+-
+-        const auth = await Auth.create(config).authorize();
+-        const api = await GmailApi.create(auth);
+-        const gmail = GmailExport.create(config, api);
+-        await gmail.exportEmails(dateRange);
+-
++        const authInstance = await Auth.create(exportConfig);
++        const auth = await authInstance.authorize();
++        const api = GmailApi.create(auth);
++        gmail = GmailExport.create(runConfig, exportConfig, api);
+     } catch (error: any) {
+-        logger.error('Error occurred during export: %s %s', error.message, error.stack);
++        logger.error('Error occurred during connection phase: %s %s', error.message, error.stack);
+         process.exit(1);
+     }
++    return gmail;
+ }
+ 
+-export function calculateDateRange(options: CommandLineArgs): DateRange {
+-    let startDate: dayjs.Dayjs;
+-    let endDate: dayjs.Dayjs;
+-    const logger = getLogger();
+-
+-    if (options.currentMonth) {
+-        const today = dayjs.utc();
+-        startDate = today.startOf('month');
+-        endDate = today;
+-    } else {
+-        // Handle end date
+-        if (options.end) {
+-            endDate = dayjs.utc(options.end);
+-            if (!endDate.isValid()) {
+-                logger.error('Invalid end date format. Please use YYYY-MM-DD');
+-                process.exit(1);
+-            }
+-        } else {
+-            endDate = dayjs.utc();
+-        }
+-
+-        // Handle start date
+-        if (options.start) {
+-            startDate = dayjs.utc(options.start);
+-            if (!startDate.isValid()) {
+-                logger.error('Invalid start date format. Please use YYYY-MM-DD');
+-                process.exit(1);
+-            }
++export async function configure(options: Arguments.Input, logger: Logger) {
++    let runConfig: Run.Config;
++    let exportConfig: ExportConfig;
++    try {
++        [runConfig, exportConfig] = await Arguments.generateConfig(options);
++        logger.info('\n\n\tRun Configuration: %s', JSON.stringify(runConfig, null, 2).replace(/\n/g, '\n\t') + '\n\n');
++        logger.info('\n\n\tExport Configuration: %s', JSON.stringify(exportConfig, null, 2).replace(/\n/g, '\n\t') + '\n\n');
++    } catch (error: any) {
++        if (error instanceof Arguments.ArgumentError) {
++            const argumentError = error as Arguments.ArgumentError;
++            logger.error('There was an error with a command line argument');
++            logger.error('\tcommand line argument: %s', argumentError.argument);
++            logger.error('\tmessage: %s', argumentError.message);
++        } else if (error instanceof Run.ConfigError) {
++            logger.error('A Error occurred configuring this run of the export: %s', error.message);
++        } else if (error instanceof Export.ConfigError) {
++            logger.error('A Error occurred in generating the export configuration: %s', error.message);
+         } else {
+-            startDate = endDate.subtract(31, 'day');
++            logger.error('A general error occurred during configuration phase: %s %s', error.message, error.stack);
+         }
+-    }
+-
+-    if (endDate.isBefore(startDate)) {
+-        logger.error('End date must be after start date');
+         process.exit(1);
+     }
+-
+-    return {
+-        start: startDate.toDate(),
+-        end: endDate.toDate()
+-    };
++    return { exportConfig, runConfig };
+ }
+-
+-export function logExportConfiguration(options: CommandLineArgs, dateRange: DateRange, logger: Logger) {
+-    logger.info('Export Configuration:');
+-    logger.info(`\tConfig File: ${options.config}`);
+-    logger.info('\tDate Range:');
+-    logger.info(`\t\tStart: ${dayjs(dateRange.start).format('YYYY-MM-DD')}`);
+-    logger.info(`\t\tEnd: ${dayjs(dateRange.end).format('YYYY-MM-DD')}`);
+-}
+-
+-export function logDetailedConfiguration(config: Configuration, logger: Logger) {
+-    logger.info('Detailed Configuration:');
+-    logger.info('\tCredentials:');
+-    logger.info(`\t\tCredentials File: ${config.credentials.credentials_file}`);
+-    logger.info(`\t\tToken File: ${config.credentials.token_file}`);
+-    logger.info('\tExport Settings:');
+-    logger.info(`\t\tMax Results: ${config.export.max_results}`);
+-    logger.info(`\t\tDestination: ${config.export.destination_dir}`);
+-    logger.info(`\t\tOutput Structure: ${config.export.output_structure}`);
+-    logger.info(`\t\tFilename Options: ${config.export.filename_options?.join(', ') || 'none'}`);
+-    logger.info('\tFilters:');
+-    logger.info('\t\tInclude:');
+-    logger.info(`\t\t\tLabels: ${config.filters.include?.labels?.join(', ') || 'none'}`);
+-    logger.info(`\t\t\tFrom: ${config.filters.include?.from?.join(', ') || 'none'}`);
+-    logger.info(`\t\t\tTo: ${config.filters.include?.to?.join(', ') || 'none'}`);
+-    logger.info(`\t\t\tSubject: ${config.filters.include?.subject?.join(', ') || 'none'}`);
+-    logger.info('\t\tExclude:');
+-    logger.info(`\t\t\tLabels: ${config.filters.exclude?.labels?.join(', ') || 'none'}`);
+-    logger.info(`\t\t\tFrom: ${config.filters.exclude?.from?.join(', ') || 'none'}`);
+-    logger.info(`\t\t\tTo: ${config.filters.exclude?.to?.join(', ') || 'none'}`);
+-    logger.info(`\t\t\tSubject: ${config.filters.exclude?.subject?.join(', ') || 'none'}`);
+-}
+-
+-main(); 
+\ No newline at end of file
+diff --git a/src/types.ts b/src/types.ts
+index 87e0aae..ec5070b 100644
+--- a/src/types.ts
++++ b/src/types.ts
+@@ -1,21 +1,3 @@
+-export type FilenameOption = 'date' | 'time' | 'subject';
+-
+-export interface CommandLineArgs {
+-    config?: string;
+-    output: string;
+-    start?: string;
+-    end?: string;
+-    currentMonth?: boolean;
+-    dryRun: boolean;
+-    verbose?: boolean;
+-    outputStructure?: 'year' | 'month' | 'day';
+-    filenameOptions?: string;
+-}
+-
+-export interface DateRange {
+-    start: Date;
+-    end: Date;
+-}
+ 
+ // Add this interface for label mapping
+ export interface GmailLabel {
+@@ -24,13 +6,6 @@ export interface GmailLabel {
+     type: string;
+ }
+ 
+-export interface MessageFilter {
+-    labels?: string[];
+-    from?: string[];
+-    to?: string[];
+-    subject?: string[];
+-}
+-
+ // Type for the headers we care about
+ export interface MessageHeaders {
+     from: string;
+@@ -43,27 +18,4 @@ export interface MessageHeaders {
+     contentType?: string;
+     cc?: string;
+     bcc?: string;
+-}
+-
+-// Configuration type definition
+-export interface Configuration {
+-    credentials: {
+-        credentials_file: string;
+-        token_file: string;
+-    };
+-    export: {
+-        max_results: number;
+-        destination_dir: string;
+-        dry_run: boolean;
+-        output_structure: 'year' | 'month' | 'day';
+-        filename_options?: FilenameOption[];
+-        timezone: string;
+-    };
+-    api: {
+-        scopes: string[];
+-    };
+-    filters: {
+-        exclude: MessageFilter;
+-        include: MessageFilter;
+-    };
+ }
+\ No newline at end of file
+diff --git a/tests/filename.test.ts b/tests/filename.test.ts
+index 34f439e..21d2d20 100644
+--- a/tests/filename.test.ts
++++ b/tests/filename.test.ts
+@@ -1,132 +1,101 @@
+-import { describe, it, expect } from '@jest/globals';
+ import { formatFilename } from '../src/filename.js';
+-import { Configuration, FilenameOption } from '../src/types.js';
+-import dayjs from 'dayjs';
+-import timezone from 'dayjs/plugin/timezone.js';
+-import utc from 'dayjs/plugin/utc.js';
+-
+-// Extend dayjs with plugins
+-dayjs.extend(utc);
+-dayjs.extend(timezone);
+-
+-describe('filename.ts', () => {
+-    const baseConfig: Configuration = {
+-        credentials: {
+-            credentials_file: 'test.json',
+-            token_file: 'test-token.json'
+-        },
+-        export: {
+-            max_results: 100,
+-            destination_dir: './exports',
+-            dry_run: false,
+-            output_structure: 'month',
+-            timezone: 'UTC'
+-        },
+-        api: {
+-            scopes: ['https://www.googleapis.com/auth/gmail.readonly']
+-        },
+-        filters: {
+-            exclude: {},
+-            include: {}
+-        }
+-    };
+-
+-    const testDate = dayjs.tz('2024-03-15T20:30:00', 'America/New_York').toDate();
+-    const testMessageId = 'abc123';
+-    const testSubject = 'Test Email Subject';
+-
+-    it('should format filename with no options', () => {
+-        const config = { ...baseConfig };
+-        const result = formatFilename(testMessageId, testDate, testSubject, config);
+-        expect(result).toBe('abc123.eml');
+-    });
++import { FilenameOption, OutputStructure } from '../src/export.d.js';
++import { jest } from '@jest/globals';
+ 
+-    it('should format filename with date option (month structure)', () => {
+-        const testDate = dayjs.tz('2024-03-20T14:30:00', 'America/New_York').tz('UTC');
+-        const config: Configuration = {
+-            ...baseConfig,
+-            export: {
+-                ...baseConfig.export,
+-                filename_options: ['date' as FilenameOption]
+-            }
+-        };
+-        const result = formatFilename(testMessageId, testDate.toDate(), testSubject, config);
+-        expect(result).toBe(`${testDate.format('DD')}-abc123.eml`);
+-    });
++describe('filename', () => {
+ 
+-    it('should format filename with date option (year structure)', () => {
+-        const testDate = dayjs.tz('2024-03-20T14:30:00', 'America/New_York').tz('UTC');
+-        const config: Configuration = {
+-            ...baseConfig,
+-            export: {
+-                ...baseConfig.export,
+-                output_structure: 'year' as const,
+-                filename_options: ['date' as FilenameOption]
+-            }
+-        };
+-        const result = formatFilename(testMessageId, testDate.toDate(), testSubject, config);
+-        expect(result).toBe(`${testDate.format('MM-DD')}-abc123.eml`);
++    beforeEach(() => {
++        // Clear mocks
++        jest.clearAllMocks();
+     });
+ 
+-    it('should format filename with time option', () => {
+-        const testDate = dayjs.tz('2024-03-20T14:30:00', 'America/New_York').tz('UTC');
+-        const config: Configuration = {
+-            ...baseConfig,
+-            export: {
+-                ...baseConfig.export,
+-                filename_options: ['time' as FilenameOption]
+-            }
+-        };
+-        const result = formatFilename(testMessageId, testDate.toDate(), testSubject, config);
+-        expect(result).toBe(`${testDate.format('HHmm')}-abc123.eml`);
+-    });
++    describe('formatFilename', () => {
++        const messageId = 'abc123';
++        const date = new Date('2024-01-02T12:34:56Z');
++        const subject = 'Test Subject!';
++        const timezone = 'UTC';
+ 
+-    it('should format filename with subject option', () => {
+-        const config: Configuration = {
+-            ...baseConfig,
+-            export: {
+-                ...baseConfig.export,
+-                filename_options: ['subject' as FilenameOption]
+-            }
+-        };
+-        const result = formatFilename(testMessageId, testDate, testSubject, config);
+-        expect(result).toBe('abc123-test-email-subject.eml');
+-    });
++        it('should format filename with date option for no structure', () => {
++            const options: FilenameOption[] = ['date'];
++            const structure: OutputStructure = 'none';
+ 
+-    it('should format filename with all options', () => {
+-        const testDate = dayjs.tz('2024-03-15T120:30:00', 'America/New_York').tz('UTC');
+-        const config: Configuration = {
+-            ...baseConfig,
+-            export: {
+-                ...baseConfig.export,
+-                filename_options: ['date', 'time', 'subject'] as FilenameOption[]
+-            }
+-        };
+-        const result = formatFilename(testMessageId, testDate.toDate(), testSubject, config);
+-        expect(result).toBe(`${testDate.format('DD')}-${testDate.format('HHmm')}-abc123-test-email-subject.eml`);
+-    });
++            const result = formatFilename(messageId, date, subject, timezone, options, structure);
+ 
+-    it('should handle special characters in subject', () => {
+-        const config: Configuration = {
+-            ...baseConfig,
+-            export: {
+-                ...baseConfig.export,
+-                filename_options: ['subject' as FilenameOption]
+-            }
+-        };
+-        const result = formatFilename(testMessageId, testDate, 'Test@#$%^&*() Subject!', config);
+-        expect(result).toBe('abc123-test-subject.eml');
+-    });
++            expect(result).toBe('2024-01-02-abc123.eml');
++        });
++
++        it('should format filename with date option for year structure', () => {
++            const options: FilenameOption[] = ['date'];
++            const structure: OutputStructure = 'year';
++
++            const result = formatFilename(messageId, date, subject, timezone, options, structure);
++
++            expect(result).toBe('01-02-abc123.eml');
++        });
++
++        it('should format filename with date option for month structure', () => {
++            const options: FilenameOption[] = ['date'];
++            const structure: OutputStructure = 'month';
++
++            const result = formatFilename(messageId, date, subject, timezone, options, structure);
++
++            expect(result).toBe('02-abc123.eml');
++        });
++
++        it('should throw error when using date with day structure', () => {
++            const options: FilenameOption[] = ['date'];
++            const structure: OutputStructure = 'day';
++
++            expect(() => {
++                formatFilename(messageId, date, subject, timezone, options, structure);
++            }).toThrow('Cannot use date in filename when output structure is "day"');
++        });
++
++        it('should format filename with time option', () => {
++            const options: FilenameOption[] = ['time'];
++            const structure: OutputStructure = 'year';
++
++            const result = formatFilename(messageId, date, subject, timezone, options, structure);
++
++            expect(result).toBe('1234-abc123.eml');
++        });
++
++        it('should format filename with subject option', () => {
++            const options: FilenameOption[] = ['subject'];
++            const structure: OutputStructure = 'year';
++
++            const result = formatFilename(messageId, date, subject, timezone, options, structure);
++
++            expect(result).toBe('abc123-test-subject.eml');
++        });
++
++        it('should format filename with all options', () => {
++            const options: FilenameOption[] = ['date', 'time', 'subject'];
++            const structure: OutputStructure = 'year';
++
++            const result = formatFilename(messageId, date, subject, timezone, options, structure);
++
++            expect(result).toBe('01-02-1234-abc123-test-subject.eml');
++        });
++
++        it('should handle special characters in subject', () => {
++            const options: FilenameOption[] = ['subject'];
++            const structure: OutputStructure = 'year';
++            const specialSubject = 'Test! @#$% Subject &*()';
++
++            const result = formatFilename(messageId, date, specialSubject, timezone, options, structure);
++
++            expect(result).toBe('abc123-test-subject-.eml');
++        });
++
++        it('should truncate long subjects to 50 characters', () => {
++            const options: FilenameOption[] = ['subject'];
++            const structure: OutputStructure = 'year';
++            const longSubject = 'This is a very long subject that should be truncated to fifty characters';
++
++            const result = formatFilename(messageId, date, longSubject, timezone, options, structure);
+ 
+-    it('should throw error when using date option with day structure', () => {
+-        const config: Configuration = {
+-            ...baseConfig,
+-            export: {
+-                ...baseConfig.export,
+-                output_structure: 'day' as const,
+-                filename_options: ['date' as FilenameOption]
+-            }
+-        };
+-        expect(() => formatFilename(testMessageId, testDate, testSubject, config)).toThrow();
++            expect(result.length).toBeLessThanOrEqual(50 + 'abc123-.eml'.length);
++        });
+     });
+-}); 
+\ No newline at end of file
++});
+diff --git a/tests/filter.test.ts b/tests/filter.test.ts
+index 887ba19..2d78ba1 100644
+--- a/tests/filter.test.ts
++++ b/tests/filter.test.ts
+@@ -1,175 +1,142 @@
+-import { Configuration } from '../src/types';
+-import * as Filter from '../src/filter';
+-import { gmail_v1 } from 'googleapis';
+-import MessageWrapper from '../src/MessageWrapper';
++import { Config as ExportConfig } from '../src/export.d.js';
++import * as Filter from '../src/filter.js';
++import MessageWrapper from '../src/gmail/MessageWrapper.js';
+ 
+-describe('Filter', () => {
+-    let mockConfig: Configuration;
+-    let filter: ReturnType<typeof Filter.create>;
++describe('filter', () => {
++    let config: ExportConfig;
++    let message: MessageWrapper;
+ 
+     beforeEach(() => {
+-        mockConfig = {
+-            credentials: {
+-                credentials_file: 'test.json',
+-                token_file: 'token.json'
+-            },
+-            export: {
+-                max_results: 1000,
+-                destination_dir: './test',
+-                start_date: '2024-01-01',
+-                end_date: '2024-01-31',
+-                dry_run: false,
+-                output_structure: 'year',
+-                timezone: 'UTC'
+-            },
+-            api: {
+-                scopes: ['test.scope']
+-            },
++        config = {
++            outputDirectory: '',
++            outputStructure: 'year',
++            filenameOptions: ['date'],
++            credentialsFile: '',
++            tokenFile: '',
++            apiScopes: [],
+             filters: {
+-                include: {
+-                    labels: ['IMPORTANT'],
+-                    from: ['include@example.com'],
+-                    subject: ['include subject'],
+-                    to: ['include-to@example.com']
+-                },
+-                exclude: {
+-                    labels: ['SPAM'],
+-                    from: ['spam@example.com'],
+-                    subject: ['spam subject'],
+-                    to: ['spam-to@example.com']
+-                }
++                exclude: {},
++                include: {}
+             }
+-        } as Configuration;
+-
+-        filter = Filter.create(mockConfig);
++        };
++
++        message = {
++            from: 'test@example.com',
++            to: 'recipient@example.com',
++            subject: 'Test Subject',
++            raw: {
++                labelIds: ['Label_1', 'Label_2']
++            }
++        } as MessageWrapper;
+     });
+ 
+     describe('shouldSkipEmail', () => {
+-        it('should not skip email matching include patterns', () => {
+-            const email: gmail_v1.Schema$Message = {
+-                id: '123',
+-                labelIds: ['INBOX'],
+-                payload: {
+-                    headers: [
+-                        { name: 'From', value: 'include@example.com' },
+-                        { name: 'To', value: 'test@example.com' },
+-                        { name: 'Subject', value: 'test subject' },
+-                        { name: 'Date', value: new Date().toISOString() },
+-                        { name: 'Message-ID', value: '123' },
+-                    ]
+-                }
+-            };
+-
+-            const result = filter.shouldSkipEmail(new MessageWrapper(email));
++        it('should not skip when no filters are defined', () => {
++            const filter = Filter.create(config);
++            const result = filter.shouldSkipEmail(message);
+             expect(result.skip).toBe(false);
+         });
+ 
+-        it('should skip email not matching any include patterns when includes are specified', () => {
+-            const email: gmail_v1.Schema$Message = {
+-                id: '123',
+-                labelIds: ['INBOX'],
+-                payload: {
+-                    headers: [
+-                        { name: 'From', value: 'other@example.com' },
+-                        { name: 'To', value: 'test@example.com' },
+-                        { name: 'Subject', value: 'test subject' },
+-                        { name: 'Date', value: new Date().toISOString() },
+-                        { name: 'Message-ID', value: '123' },
+-                    ]
+-                }
+-            };
+-
+-            const result = filter.shouldSkipEmail(new MessageWrapper(email));
+-            expect(result.skip).toBe(true);
+-            expect(result.reason).toBe('No include patterns matched');
+-        });
+-
+-        it('should skip email matching exclude patterns', () => {
+-            // Remove include filters to test exclude patterns
+-            mockConfig.filters.include = {};
+-            filter = Filter.create(mockConfig);
+-
+-            const email: gmail_v1.Schema$Message = {
+-                id: '123',
+-                labelIds: ['INBOX'],
+-                payload: {
+-                    headers: [
+-                        { name: 'From', value: 'spam@example.com' },
+-                        { name: 'To', value: 'test@example.com' },
+-                        { name: 'Subject', value: 'test subject' },
+-                        { name: 'Date', value: new Date().toISOString() },
+-                        { name: 'Message-ID', value: '123' },
+-                    ]
+-                }
+-            };
+-
+-            const result = filter.shouldSkipEmail(new MessageWrapper(email));
+-            expect(result.skip).toBe(true);
+-            expect(result.reason).toBe('Skipped sender pattern');
++        describe('inclusive filters', () => {
++            it('should skip when inclusive filters exist but no match', () => {
++                config.filters!.include = {
++                    from: ['different@example.com']
++                };
++                const filter = Filter.create(config);
++                const result = filter.shouldSkipEmail(message);
++                expect(result.skip).toBe(true);
++                expect(result.reason).toBe('No include patterns matched');
++            });
++
++            it('should not skip when from pattern matches', () => {
++                config.filters!.include = {
++                    from: ['test@example.com']
++                };
++                const filter = Filter.create(config);
++                const result = filter.shouldSkipEmail(message);
++                expect(result.skip).toBe(false);
++            });
++
++            it('should not skip when subject pattern matches', () => {
++                config.filters!.include = {
++                    subject: ['Test']
++                };
++                const filter = Filter.create(config);
++                const result = filter.shouldSkipEmail(message);
++                expect(result.skip).toBe(false);
++            });
++
++            it('should not skip when to pattern matches', () => {
++                config.filters!.include = {
++                    to: ['recipient@example.com']
++                };
++                const filter = Filter.create(config);
++                const result = filter.shouldSkipEmail(message);
++                expect(result.skip).toBe(false);
++            });
++
++            it('should not skip when label matches', () => {
++                config.filters!.include = {
++                    labels: ['Label_1']
++                };
++                const filter = Filter.create(config);
++                const result = filter.shouldSkipEmail(message);
++                expect(result.skip).toBe(false);
++            });
+         });
+ 
+-        it('should skip email with excluded label', () => {
+-            mockConfig.filters.include = {};
+-            filter = Filter.create(mockConfig);
+-
+-            const email: gmail_v1.Schema$Message = {
+-                id: '123',
+-                labelIds: ['SPAM'],
+-                payload: {
+-                    headers: [
+-                        { name: 'From', value: 'test@example.com' },
+-                        { name: 'To', value: 'test@example.com' },
+-                        { name: 'Subject', value: 'test subject' },
+-                        { name: 'Date', value: new Date().toISOString() },
+-                        { name: 'Message-ID', value: '123' },
+-                    ]
+-                }
+-            };
+-
+-            const result = filter.shouldSkipEmail(new MessageWrapper(email));
+-            expect(result.skip).toBe(true);
+-            expect(result.reason).toBe('Skipped label');
+-        });
+-
+-        it('should not skip email when no filters match', () => {
+-            mockConfig.filters.include = {};
+-            filter = Filter.create(mockConfig);
+-
+-            const email: gmail_v1.Schema$Message = {
+-                id: '123',
+-                labelIds: ['INBOX'],
+-                payload: {
+-                    headers: [
+-                        { name: 'From', value: 'test@example.com' },
+-                        { name: 'To', value: 'test@example.com' },
+-                        { name: 'Subject', value: 'test subject' },
+-                        { name: 'Date', value: new Date().toISOString() },
+-                        { name: 'Message-ID', value: '123' },
+-                    ]
+-                }
+-            };
+-
+-            const result = filter.shouldSkipEmail(new MessageWrapper(email));
+-            expect(result.skip).toBe(false);
+-        });
+-
+-        it('should keep email matching include pattern regardless of exclude patterns', () => {
+-            const email: gmail_v1.Schema$Message = {
+-                id: '123',
+-                labelIds: ['SPAM'],
+-                payload: {
+-                    headers: [
+-                        { name: 'From', value: 'include@example.com' },
+-                        { name: 'To', value: 'spam-to@example.com' }, // Would normally be excluded
+-                        { name: 'Subject', value: 'test subject' },
+-                        { name: 'Date', value: new Date().toISOString() },
+-                        { name: 'Message-ID', value: '123' },
+-                    ]
+-                }
+-            };
+-
+-            const result = filter.shouldSkipEmail(new MessageWrapper(email));
+-            expect(result.skip).toBe(false);
++        describe('exclusive filters', () => {
++            it('should skip when from pattern matches', () => {
++                config.filters!.exclude = {
++                    from: ['test@example.com']
++                };
++                const filter = Filter.create(config);
++                const result = filter.shouldSkipEmail(message);
++                expect(result.skip).toBe(true);
++                expect(result.reason).toBe('Skipped sender pattern');
++            });
++
++            it('should skip when subject pattern matches', () => {
++                config.filters!.exclude = {
++                    subject: ['Test']
++                };
++                const filter = Filter.create(config);
++                const result = filter.shouldSkipEmail(message);
++                expect(result.skip).toBe(true);
++                expect(result.reason).toBe('Skipped subject pattern');
++            });
++
++            it('should skip when to pattern matches', () => {
++                config.filters!.exclude = {
++                    to: ['recipient@example.com']
++                };
++                const filter = Filter.create(config);
++                const result = filter.shouldSkipEmail(message);
++                expect(result.skip).toBe(true);
++                expect(result.reason).toBe('Skipped recipient pattern');
++            });
++
++            it('should skip when label matches', () => {
++                config.filters!.exclude = {
++                    labels: ['Label_1']
++                };
++                const filter = Filter.create(config);
++                const result = filter.shouldSkipEmail(message);
++                expect(result.skip).toBe(true);
++                expect(result.reason).toBe('Skipped label');
++            });
++
++            it('should not skip when no patterns match', () => {
++                config.filters!.exclude = {
++                    from: ['other@example.com'],
++                    subject: ['Other'],
++                    to: ['other@example.com'],
++                    labels: ['Label_3']
++                };
++                const filter = Filter.create(config);
++                const result = filter.shouldSkipEmail(message);
++                expect(result.skip).toBe(false);
++            });
+         });
+     });
+ });
+diff --git a/tests/main.test.ts b/tests/main.test.ts
+deleted file mode 100644
+index 92abe8b..0000000
+--- a/tests/main.test.ts
++++ /dev/null
+@@ -1,305 +0,0 @@
+-// Mock process.exit to prevent actual process termination
+-process.exit = jest.fn() as unknown as (code?: number) => never;
+-
+-
+-import { beforeEach, describe, expect, it, jest } from '@jest/globals';
+-import dayjs from 'dayjs';
+-import utc from 'dayjs/plugin/utc';
+-
+-// Create mock functions that can be used with expect()
+-const mockInfo = jest.fn();
+-const mockError = jest.fn();
+-const mockDebug = jest.fn();
+-
+-const mockLogger: Logger = {
+-    info: mockInfo as jest.MockedFunction<LeveledLogMethod>,
+-    error: mockError as jest.MockedFunction<LeveledLogMethod>,
+-    debug: mockDebug as jest.MockedFunction<LeveledLogMethod>
+-} as unknown as Logger;
+-
+-//Mock the logger
+-jest.mock('../src/logging.js', () => ({
+-    getLogger: jest.fn().mockReturnValue(mockLogger),
+-    setLogLevel: jest.fn()
+-}));
+-
+-import { getLogger } from '../src/logging.js';
+-import { CommandLineArgs, Configuration } from '../src/types.js';
+-import { LeveledLogMethod, Logger } from 'winston';
+-
+-// Extend dayjs with UTC plugin
+-dayjs.extend(utc);
+-
+-// Mock remaining external dependencies
+-jest.mock('fs');
+-jest.mock('../src/config.js');
+-jest.mock('../src/gmail/auth.js');
+-jest.mock('../src/gmail/api.js');
+-jest.mock('../src/gmailExport.js');
+-
+-// Mock the main function to prevent it from executing
+-const mockMain = jest.fn().mockImplementation(() => {
+-    throw new Error('main() should not be called during tests');
+-});
+-
+-jest.mock('../src/main.js', () => {
+-    const actual = jest.requireActual('../src/main.js') as {
+-        calculateDateRange: typeof calculateDateRange;
+-        logExportConfiguration: typeof logExportConfiguration;
+-        logDetailedConfiguration: typeof logDetailedConfiguration;
+-    };
+-    return {
+-        main: mockMain,
+-        calculateDateRange: actual.calculateDateRange,
+-        logExportConfiguration: actual.logExportConfiguration,
+-        logDetailedConfiguration: actual.logDetailedConfiguration,
+-        DEFAULT_CONFIG_FILE: './config.yaml',
+-        DEFAULT_OUTPUT_DIR: './exports',
+-        DEFAULT_START_DATE: '2024-02-13',
+-        DEFAULT_END_DATE: '2024-03-15'
+-    };
+-});
+-
+-import { calculateDateRange, logDetailedConfiguration, logExportConfiguration } from '../src/main.js';
+-
+-describe('main.ts', () => {
+-    beforeEach(() => {
+-        jest.clearAllMocks();
+-        // Clear the mock functions
+-        mockInfo.mockClear();
+-        mockError.mockClear();
+-        mockDebug.mockClear();
+-        mockMain.mockClear();
+-
+-        // Set fixed date to March 15, 2024 in UTC
+-        jest.useFakeTimers();
+-        jest.setSystemTime(dayjs.utc('2024-03-15').toDate());
+-    });
+-
+-    afterEach(() => {
+-        jest.useRealTimers();
+-    });
+-
+-    // Add a test to verify main() is never called
+-    it('should never call main()', () => {
+-        expect(mockMain).not.toHaveBeenCalled();
+-    });
+-
+-    describe('calculateDateRange', () => {
+-        it('should calculate correct date range when using --current-month option', () => {
+-            const options: CommandLineArgs = {
+-                config: './config.yaml',
+-                output: './exports',
+-                dryRun: false,
+-                currentMonth: true
+-            };
+-
+-            const result = calculateDateRange(options);
+-
+-            expect(result.start).toEqual(dayjs.utc('2024-03-01').toDate());
+-            expect(result.end).toEqual(dayjs.utc('2024-03-15').toDate());
+-        });
+-
+-        it('should calculate correct date range with start and end dates', () => {
+-            const options: CommandLineArgs = {
+-                config: './config.yaml',
+-                output: './exports',
+-                dryRun: false,
+-                start: '2024-01-01',
+-                end: '2024-01-31'
+-            };
+-
+-            const result = calculateDateRange(options);
+-
+-            expect(result.start).toEqual(dayjs.utc('2024-01-01').toDate());
+-            expect(result.end).toEqual(dayjs.utc('2024-01-31').toDate());
+-        });
+-
+-        it('should use default dates when no options provided', () => {
+-            const options: CommandLineArgs = {
+-                config: './config.yaml',
+-                output: './exports',
+-                dryRun: false
+-            };
+-
+-            const result = calculateDateRange(options);
+-
+-            expect(result.start).toEqual(dayjs.utc('2024-02-13').toDate()); // 31 days before 2024-03-15
+-            expect(result.end).toEqual(dayjs.utc('2024-03-15').toDate());
+-        });
+-
+-        it.skip('should handle invalid date format', () => {
+-            const options: CommandLineArgs = {
+-                config: './config.yaml',
+-                output: './exports',
+-                dryRun: false,
+-                start: 'invalid-date',
+-                end: '2024-01-31'
+-            };
+-
+-            // Spy on logger.error
+-            const logger = getLogger();
+-            const errorSpy = jest.spyOn(logger, 'error');
+-
+-            // Override isValid for this specific test
+-            const mockDayjs = dayjs as jest.MockedFunction<typeof dayjs>;
+-            const mockDayjsInstance = {
+-                isValid: jest.fn().mockReturnValue(false),
+-                toDate: jest.fn(),
+-                format: jest.fn()
+-            };
+-            mockDayjs.mockReturnValueOnce(mockDayjsInstance as any);
+-
+-            try {
+-                calculateDateRange(options);
+-            } catch (e) {
+-                // Expect process.exit to be called
+-            }
+-
+-            // Just check that error was called, without checking the exact message
+-            expect(errorSpy).toHaveBeenCalled();
+-        });
+-
+-        it.skip('should handle end date before start date', () => {
+-            const options: CommandLineArgs = {
+-                config: './config.yaml',
+-                output: './exports',
+-                dryRun: false,
+-                start: '2024-01-31',
+-                end: '2024-01-01'
+-            };
+-
+-            // Spy on logger.error
+-            const logger = getLogger();
+-            const errorSpy = jest.spyOn(logger, 'error');
+-
+-            // Override isBefore for this specific test
+-            const mockDayjs = dayjs as jest.MockedFunction<typeof dayjs>;
+-            const mockDayjsInstance = {
+-                isValid: jest.fn().mockReturnValue(true),
+-                isBefore: jest.fn().mockReturnValue(true), // This makes endDate.isBefore(startDate) return true
+-                toDate: jest.fn(),
+-                format: jest.fn()
+-            };
+-
+-            // Need to return valid instances for start and end dates
+-            mockDayjs
+-                .mockReturnValueOnce({
+-                    isValid: jest.fn().mockReturnValue(true),
+-                    toDate: jest.fn(),
+-                    format: jest.fn()
+-                } as any)  // startDate
+-                .mockReturnValueOnce(mockDayjsInstance as any); // endDate
+-
+-            try {
+-                calculateDateRange(options);
+-            } catch (e) {
+-                // Expect process.exit to be called
+-            }
+-
+-            // Just check that error was called, without checking the exact message
+-            expect(errorSpy).toHaveBeenCalled();
+-        });
+-
+-        it('should handle date validation errors appropriately', () => {
+-            // This is a placeholder test to acknowledge that we've manually 
+-            // verified the date validation logic works correctly, but we're 
+-            // having trouble testing it automatically
+-            expect(true).toBeTruthy();
+-        });
+-    });
+-
+-    describe('logExportConfiguration', () => {
+-        it('should log export configuration correctly', () => {
+-            const options: CommandLineArgs = {
+-                config: 'test-config.yaml',
+-                output: 'test-output',
+-                dryRun: false
+-            };
+-
+-            const dateRange = {
+-                start: new Date('2024-01-01'),
+-                end: new Date('2024-01-31')
+-            };
+-
+-            logExportConfiguration(options, dateRange, mockLogger);
+-
+-            expect(mockInfo).toHaveBeenCalledWith('Export Configuration:');
+-            expect(mockInfo).toHaveBeenCalledWith('\tConfig File: test-config.yaml');
+-        });
+-    });
+-
+-    describe('filename options validation', () => {
+-        it('should accept valid filename options', () => {
+-            const options: CommandLineArgs = {
+-                config: 'test-config.yaml',
+-                output: 'test-output',
+-                dryRun: false,
+-                filenameOptions: ['date', 'time', 'subject']
+-            };
+-
+-            // Should not throw an error
+-            expect(() => calculateDateRange(options)).not.toThrow();
+-        });
+-
+-    });
+-
+-    describe('logDetailedConfiguration', () => {
+-        it('should log detailed configuration correctly', () => {
+-            const config: Configuration = {
+-                credentials: {
+-                    credentials_file: 'credentials.json',
+-                    token_file: 'token.json'
+-                },
+-                api: {
+-                    scopes: ['test.scope']
+-                },
+-                export: {
+-                    max_results: 1000,
+-                    destination_dir: './exports',
+-                    dry_run: false,
+-                    output_structure: 'year',
+-                    timezone: 'UTC'
+-                },
+-                filters: {
+-                    include: {},
+-                    exclude: {}
+-                }
+-            };
+-
+-            logDetailedConfiguration(config, mockLogger);
+-
+-            expect(mockInfo).toHaveBeenCalledWith('Detailed Configuration:');
+-            expect(mockInfo).toHaveBeenCalledWith('\tCredentials:');
+-            expect(mockInfo).toHaveBeenCalledWith('\t\tCredentials File: credentials.json');
+-            expect(mockInfo).toHaveBeenCalledWith('\t\tToken File: token.json');
+-        });
+-
+-        it('should handle missing filename options', () => {
+-            const config: Configuration = {
+-                credentials: {
+-                    credentials_file: 'credentials.json',
+-                    token_file: 'token.json'
+-                },
+-                api: {
+-                    scopes: ['test.scope']
+-                },
+-                export: {
+-                    max_results: 1000,
+-                    destination_dir: './exports',
+-                    dry_run: false,
+-                    output_structure: 'year',
+-                    timezone: 'UTC'
+-                },
+-                filters: {
+-                    include: {},
+-                    exclude: {}
+-                }
+-            };
+-
+-            logDetailedConfiguration(config, mockLogger);
+-
+-            expect(mockInfo).toHaveBeenCalledWith('\t\tFilename Options: none');
+-        });
+-    });
+-});
+diff --git a/tests/setup.ts b/tests/setup.ts
+index 4b4db1f..3d1672c 100644
+--- a/tests/setup.ts
++++ b/tests/setup.ts
+@@ -14,10 +14,10 @@ const originalConsole = { ...console };
+ jest.setTimeout(30000);
+ 
+ // Suppress console output during tests but keep errors for debugging
+-console.log = jest.fn();
+-console.info = jest.fn();
+-console.warn = jest.fn();
+-console.error = originalConsole.error;
++// console.log = jest.fn();
++// console.info = jest.fn();
++// console.warn = jest.fn();
++// console.error = originalConsole.error;
+ 
+ // Export function to restore console if needed in tests
+ export function restoreConsole() {

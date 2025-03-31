@@ -1,29 +1,27 @@
-import dayjs from 'dayjs';
-import timezone from 'dayjs/plugin/timezone.js';
-import utc from 'dayjs/plugin/utc.js';
-import { Configuration } from './types.js';
-
-// Extend dayjs with plugins
-dayjs.extend(utc);
-dayjs.extend(timezone);
+import { DATE_FORMAT_DAY, DATE_FORMAT_MONTH_DAY, DATE_FORMAT_YEAR_MONTH_DAY } from './constants.js';
+import { FilenameOption, OutputStructure } from './export.d.js';
+import * as Dates from './util/dates.js';
 
 export function formatFilename(
     messageId: string,
     date: Date,
     subject: string,
-    config: Configuration
+    timezone: string,
+    filenameOptions: FilenameOption[],
+    outputStructure: OutputStructure
 ): string {
     const parts: string[] = [];
 
     // Add date if requested
-    if (config.export.filename_options?.includes('date')) {
-        const dateStr = formatDateForFilename(date, config.export.output_structure, config.export.timezone);
+    if (filenameOptions?.includes('date')) {
+        const dateStr = formatDateForFilename(date, outputStructure, timezone);
         parts.push(dateStr);
     }
 
     // Add time if requested
-    if (config.export.filename_options?.includes('time')) {
-        const timeStr = dayjs(date).tz(config.export.timezone).format('HHmm');
+    if (filenameOptions?.includes('time')) {
+        const dates = Dates.create({ timezone });
+        const timeStr = dates.format(date, 'HHmm');
         parts.push(timeStr);
     }
 
@@ -31,7 +29,7 @@ export function formatFilename(
     parts.push(messageId);
 
     // Add subject if requested
-    if (config.export.filename_options?.includes('subject')) {
+    if (filenameOptions?.includes('subject')) {
         const safeSubject = makeSubjectSafe(subject);
         parts.push(safeSubject);
     }
@@ -39,12 +37,15 @@ export function formatFilename(
     return parts.join('-') + '.eml';
 }
 
-function formatDateForFilename(date: Date, outputStructure: 'year' | 'month' | 'day', timezone: string): string {
+function formatDateForFilename(date: Date, outputStructure: 'none' | 'year' | 'month' | 'day', timezone: string): string {
+    const dates = Dates.create({ timezone });
     switch (outputStructure) {
+        case 'none':
+            return dates.format(date, DATE_FORMAT_YEAR_MONTH_DAY);
         case 'year':
-            return dayjs(date).tz(timezone).format('MM-DD');
+            return dates.format(date, DATE_FORMAT_MONTH_DAY);
         case 'month':
-            return dayjs(date).tz(timezone).format('DD');
+            return dates.format(date, DATE_FORMAT_DAY);
         case 'day':
             throw new Error('Cannot use date in filename when output structure is "day"');
     }

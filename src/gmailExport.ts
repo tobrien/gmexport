@@ -1,21 +1,17 @@
-import * as fs from 'fs';
 import { gmail_v1 } from 'googleapis';
 import * as path from 'path';
+import { DATE_FORMAT_DAY, DATE_FORMAT_MONTH, DATE_FORMAT_YEAR, DEFAULT_CHARACTER_ENCODING } from './constants.js';
+import { Config as ExportConfig, FilenameOption, OutputStructure } from './export.d.js';
+import * as Filename from './filename.js';
 import * as Filter from './filter.js';
 import * as GmailApi from './gmail/api.js';
+import MessageWrapper from './gmail/MessageWrapper.js';
 import { createQuery } from './gmail/query.js';
 import { getLogger } from './logging.js';
-import { Configuration, DateRange } from './types.js';
-import dayjs from 'dayjs';
-import * as Filename from './filename.js';
-import MessageWrapper from './MessageWrapper.js';
-
-// Import dayjs plugins
-const utc = await import('dayjs/plugin/utc.js');
-const timezone = await import('dayjs/plugin/timezone.js');
-
-dayjs.extend(utc.default);
-dayjs.extend(timezone.default);
+import * as Run from './run.js';
+import { DateRange } from './run.js';
+import * as Dates from './util/dates.js';
+import * as Storage from './util/storage.js';
 
 export interface Instance {
     exportEmails: (dateRange: DateRange) => Promise<void>;
@@ -24,35 +20,40 @@ export interface Instance {
     printExportSummary: (messages: any, processedCount: number, skippedCount: number, filteredCount: number, attachmentCount: number, dryRun: boolean) => void;
 }
 
-function ensureDirectoryExists(dirPath: string): void {
-    if (!fs.existsSync(dirPath)) {
-        fs.mkdirSync(dirPath, { recursive: true });
-    }
-}
+function getEmailFilePath(
+    baseDir: string,
+    messageId: string,
+    dateHeader: string,
+    outputStructure: OutputStructure,
+    subject: string,
+    timezone: string,
+    filenameOptions: FilenameOption[],
+): string {
+    const dates = Dates.create({ timezone });
+    const storage = Storage.create({});
 
-function getEmailFilePath(baseDir: string, messageId: string, dateHeader: string, outputStructure: 'year' | 'month' | 'day', subject: string, config: Configuration): string {
-    const date = dayjs(dateHeader);
-    const year = date.year();
-    const month = date.format('MM');
-    const day = date.format('DD');
+    const date = dates.date(dateHeader);
+    const year = dates.format(date, DATE_FORMAT_YEAR);
+    const month = dates.format(date, DATE_FORMAT_MONTH);
+    const day = dates.format(date, DATE_FORMAT_DAY);
 
     let dirPath: string;
     switch (outputStructure) {
         case 'year':
-            dirPath = path.join(baseDir, year.toString());
+            dirPath = path.join(baseDir, year);
             break;
         case 'month':
-            dirPath = path.join(baseDir, year.toString(), month);
+            dirPath = path.join(baseDir, year, month);
             break;
         case 'day':
-            dirPath = path.join(baseDir, year.toString(), month, day);
+            dirPath = path.join(baseDir, year, month, day);
             break;
         default:
             dirPath = baseDir;
     }
 
-    ensureDirectoryExists(dirPath);
-    const filename = Filename.formatFilename(messageId, date.toDate(), subject, config);
+    storage.createDirectory(dirPath);
+    const filename = Filename.formatFilename(messageId, date, subject, timezone, filenameOptions, outputStructure);
     return path.join(dirPath, filename);
 }
 
@@ -83,10 +84,11 @@ function foldHeaderLine(name: string, value: string): string {
     return result;
 }
 
-export const create = (config: Configuration, api: GmailApi.Instance): Instance => {
+export const create = (runConfig: Run.Config, exportConfig: ExportConfig, api: GmailApi.Instance): Instance => {
     const logger = getLogger();
-    const filter = Filter.create(config);
+    const filter = Filter.create(exportConfig);
     const userId = 'me';
+    const storage = Storage.create({});
 
     let processedCount = 0;
     let skippedCount = 0;
@@ -122,16 +124,17 @@ export const create = (config: Configuration, api: GmailApi.Instance): Instance 
             }
 
             const filePath = getEmailFilePath(
-                config.export.destination_dir,
+                exportConfig.outputDirectory,
                 messageId!,
                 wrappedMessage.date,
-                config.export.output_structure,
+                exportConfig.outputStructure,
                 wrappedMessage.subject || 'No Subject',
-                config
+                runConfig.timezone,
+                exportConfig.filenameOptions
             );
 
             // Skip if file already exists
-            if (fs.existsSync(filePath)) {
+            if (await storage.exists(filePath)) {
                 logger.debug('Skipping existing file: %s', filePath);
                 skippedCount++;
                 return;
@@ -155,7 +158,7 @@ export const create = (config: Configuration, api: GmailApi.Instance): Instance 
             ].join('\n');
 
             const rowMessage = Buffer.from(messageRaw.raw!, 'base64').toString('utf-8');
-            fs.writeFileSync(filePath, gmExportHeaders + '\n' + rowMessage);
+            await storage.writeFile(filePath, gmExportHeaders + '\n' + rowMessage, DEFAULT_CHARACTER_ENCODING);
             logger.info('Exported email: %s', filePath);
             processedCount++;
         } catch (error) {
@@ -166,8 +169,8 @@ export const create = (config: Configuration, api: GmailApi.Instance): Instance 
 
     async function exportEmails(dateRange: DateRange): Promise<void> {
         try {
-            const query = createQuery(dateRange, config);
-            await api.listMessages({ userId, q: query, maxResults: config.export.max_results }, async (messageBatch) => {
+            const query = createQuery(dateRange, exportConfig, runConfig.timezone);
+            await api.listMessages({ userId, q: query }, async (messageBatch) => {
                 logger.info('Processing %d messages', messageBatch.length);
                 // Process all messages in the batch concurrently
                 await Promise.all(messageBatch.map(message => processMessage(message)));
@@ -175,7 +178,7 @@ export const create = (config: Configuration, api: GmailApi.Instance): Instance 
 
             printExportSummary();
 
-            if (config.export.dry_run) {
+            if (runConfig.dryRun) {
                 logger.info('This was a dry run. No files were actually saved.');
             }
         } catch (error: any) {
@@ -191,7 +194,7 @@ export const create = (config: Configuration, api: GmailApi.Instance): Instance 
         logger.info(`\tSkipped (already exists): ${skippedCount}`);
         logger.info(`\tFiltered out: ${filteredCount}`);
         logger.info(`\tErrors: ${errorCount}`);
-        logger.info(`\tDry run mode: ${config.export.dry_run ? 'Yes' : 'No'}`);
+        logger.info(`\tDry run mode: ${runConfig.dryRun ? 'Yes' : 'No'}`);
     }
 
     return {
