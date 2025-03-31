@@ -1,7 +1,6 @@
 import { gmail_v1 } from 'googleapis';
 import * as path from 'path';
 import * as Dates from '../util/dates';
-import * as GmailApi from './api';
 import * as Storage from '../util/storage';
 import {
     DEFAULT_BINARY_TO_TEXT_ENCODING,
@@ -12,7 +11,7 @@ import {
     DATE_FORMAT_YEAR,
     DEFAULT_CHARACTER_ENCODING,
 } from '../constants';
-
+import { Instance as GmailApiInstance } from './api.d';
 export function sanitizeFilename(filename: string): string {
     // Replace characters that are invalid in filenames
     return filename.replace(/[<>:"/\\|?*]/g, '-');
@@ -46,7 +45,7 @@ export function getAttachmentFilePath(baseDir: string, date: Date, subject: stri
 
 // Add function to handle attachments
 export async function saveAttachment(
-    api: GmailApi.Instance,
+    api: GmailApiInstance,
     userId: string,
     messageId: string,
     attachmentId: string,
