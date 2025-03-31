@@ -5,7 +5,7 @@
     "main": "dist/main.js",
     "type": "module",
     "bin": {
-        "gmexport": "./dist/src/main.js"
+        "gmexport": "./dist/main.js"
     },
     "scripts": {
         "build": "vite build",
