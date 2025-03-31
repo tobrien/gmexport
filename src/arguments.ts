@@ -1,41 +1,13 @@
 import { Command } from "commander";
-import * as Export from "./export.js";
-import { FilenameOption, OutputStructure, Config as ExportConfig } from "./export.d.js";
-import { getLogger } from "./logging.js";
-import * as Run from "./run.js";
-import * as Dates from "./util/dates.js";
-import * as Storage from "./util/storage.js";
-import { ALLOWED_FILENAME_OPTIONS, ALLOWED_OUTPUT_STRUCTURES, ALLOWED_SCOPES, DEFAULT_CURRENT_MONTH, DEFAULT_DRY_RUN, DEFAULT_TIMEZONE, DEFAULT_VERBOSE, PROGRAM_NAME, VERSION } from "./constants.js";
-
-export interface Input {
-    currentMonth: boolean;
-    dryRun: boolean;
-    verbose: boolean;
-    timezone: string;
-    config?: string;
-    outputDirectory: string;
-    start?: string;
-    end?: string;
-    outputStructure?: string;
-    filenameOptions?: string[];
-    credentialsFile?: string;
-    tokenFile?: string;
-    apiScopes?: string[];
-}
-
-
-export class ArgumentError extends Error {
-    private argumentName: string;
-    constructor(argumentName: string, message: string) {
-        super(`${message}`);
-        this.name = 'ArgumentError';
-        this.argumentName = argumentName;
-    }
-
-    get argument(): string {
-        return this.argumentName;
-    }
-}
+import * as Export from "./export";
+import { FilenameOption, OutputStructure, Config as ExportConfig } from "./export.d";
+import { getLogger } from "./logging";
+import * as Run from "./run";
+import * as Dates from "./util/dates";
+import * as Storage from "./util/storage";
+import { ALLOWED_FILENAME_OPTIONS, ALLOWED_OUTPUT_STRUCTURES, ALLOWED_SCOPES, DEFAULT_CURRENT_MONTH, DEFAULT_DRY_RUN, DEFAULT_TIMEZONE, DEFAULT_VERBOSE, PROGRAM_NAME, VERSION } from "./constants";
+import { Input } from "./arguments.d";
+import { ArgumentError } from "./error/ArgumentError";
 
 export const configure = (program: Command) => {
     program

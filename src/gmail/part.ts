@@ -1,5 +1,5 @@
-import * as GmailApi from './api.js';
-import { saveAttachment } from './attachment.js';
+import * as GmailApi from './api';
+import { saveAttachment } from './attachment';
 
 export async function processMessagePart(
     api: GmailApi.Instance,

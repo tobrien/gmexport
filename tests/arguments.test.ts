@@ -63,7 +63,6 @@ beforeAll(async () => {
     mockExport = await import('../src/export.js');
 
     const argumentsModule = await import('../src/arguments.js');
-    ArgumentError = argumentsModule.ArgumentError;
     configure = argumentsModule.configure;
     generateConfig = argumentsModule.generateConfig;
     validateApiScopes = argumentsModule.validateApiScopes;

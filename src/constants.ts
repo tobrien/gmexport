@@ -1,6 +1,6 @@
-import { FilenameOption, OutputStructure } from "./export.d.js";
+import { FilenameOption, OutputStructure } from "./export.d";
 
-export const VERSION = 'mainbranch';
+export const VERSION = '__VERSION__ (__GIT_BRANCH__/__GIT_COMMIT__ __GIT_TAGS__ __GIT_COMMIT_DATE__) __SYSTEM_INFO__';
 export const PROGRAM_NAME = 'gmexport';
 export const DEFAULT_CHARACTER_ENCODING = 'utf-8';
 export const DEFAULT_BINARY_TO_TEXT_ENCODING = 'base64';

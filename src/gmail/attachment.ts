@@ -1,8 +1,8 @@
 import { gmail_v1 } from 'googleapis';
 import * as path from 'path';
-import * as Dates from '../util/dates.js';
-import * as GmailApi from './api.js';
-import * as Storage from '../util/storage.js';
+import * as Dates from '../util/dates';
+import * as GmailApi from './api';
+import * as Storage from '../util/storage';
 import {
     DEFAULT_BINARY_TO_TEXT_ENCODING,
     DATE_FORMAT_DAY,
@@ -11,7 +11,7 @@ import {
     DATE_FORMAT_MONTH,
     DATE_FORMAT_YEAR,
     DEFAULT_CHARACTER_ENCODING,
-} from '../constants.js';
+} from '../constants';
 
 export function sanitizeFilename(filename: string): string {
     // Replace characters that are invalid in filenames

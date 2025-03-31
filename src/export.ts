@@ -1,10 +1,10 @@
 import * as yaml from 'js-yaml';
-import * as Storage from './util/storage.js';
-import { getLogger } from './logging.js';
-import { deepMerge } from './util/general.js';
-import { Input } from './arguments.js';
-import { DEFAULT_CHARACTER_ENCODING, DEFAULT_CREDENTIALS_FILE, DEFAULT_DESTINATION_DIR, DEFAULT_FILENAME_OPTIONS, DEFAULT_OUTPUT_STRUCTURE, DEFAULT_SCOPES, DEFAULT_TOKEN_FILE } from './constants.js';
-import { FieldValidation, Config, InputParameters, Field } from './export.d.js';
+import * as Storage from './util/storage';
+import { getLogger } from './logging';
+import { deepMerge } from './util/general';
+import { Input } from './arguments.d';
+import { DEFAULT_CHARACTER_ENCODING, DEFAULT_CREDENTIALS_FILE, DEFAULT_DESTINATION_DIR, DEFAULT_FILENAME_OPTIONS, DEFAULT_OUTPUT_STRUCTURE, DEFAULT_SCOPES, DEFAULT_TOKEN_FILE } from './constants';
+import { FieldValidation, Config, InputParameters, Field } from './export.d';
 
 export class ConfigError extends Error {
     constructor(message: string) {

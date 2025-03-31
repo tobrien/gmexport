@@ -1,4 +1,4 @@
-import * as Dates from "./util/dates.js";
+import * as Dates from "./util/dates";
 
 export interface DateRange {
     start: Date;

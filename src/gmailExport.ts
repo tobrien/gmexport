@@ -1,24 +1,18 @@
 import { gmail_v1 } from 'googleapis';
 import * as path from 'path';
-import { DATE_FORMAT_DAY, DATE_FORMAT_MONTH, DATE_FORMAT_YEAR, DEFAULT_CHARACTER_ENCODING } from './constants.js';
-import { Config as ExportConfig, FilenameOption, OutputStructure } from './export.d.js';
-import * as Filename from './filename.js';
-import * as Filter from './filter.js';
-import * as GmailApi from './gmail/api.js';
-import MessageWrapper from './gmail/MessageWrapper.js';
-import { createQuery } from './gmail/query.js';
-import { getLogger } from './logging.js';
-import * as Run from './run.js';
-import { DateRange } from './run.js';
-import * as Dates from './util/dates.js';
-import * as Storage from './util/storage.js';
-
-export interface Instance {
-    exportEmails: (dateRange: DateRange) => Promise<void>;
-
-    // I dislike exporting these functions, but do so to make testing easier.
-    printExportSummary: (messages: any, processedCount: number, skippedCount: number, filteredCount: number, attachmentCount: number, dryRun: boolean) => void;
-}
+import { DATE_FORMAT_DAY, DATE_FORMAT_MONTH, DATE_FORMAT_YEAR, DEFAULT_CHARACTER_ENCODING } from './constants';
+import { Config as ExportConfig, FilenameOption, OutputStructure } from './export.d';
+import * as Filename from './filename';
+import * as Filter from './filter';
+import MessageWrapper from './gmail/MessageWrapper';
+import { createQuery } from './gmail/query';
+import { getLogger } from './logging';
+import * as Run from './run';
+import { DateRange } from './run';
+import * as Dates from './util/dates';
+import * as Storage from './util/storage';
+import { Instance as GmailApiInstance } from './gmail/api.d';
+import { Instance } from './gmailExport.d';
 
 function getEmailFilePath(
     baseDir: string,
@@ -84,7 +78,7 @@ function foldHeaderLine(name: string, value: string): string {
     return result;
 }
 
-export const create = (runConfig: Run.Config, exportConfig: ExportConfig, api: GmailApi.Instance): Instance => {
+export const create = (runConfig: Run.Config, exportConfig: ExportConfig, api: GmailApiInstance): Instance => {
     const logger = getLogger();
     const filter = Filter.create(exportConfig);
     const userId = 'me';
@@ -173,7 +167,7 @@ export const create = (runConfig: Run.Config, exportConfig: ExportConfig, api: G
             await api.listMessages({ userId, q: query }, async (messageBatch) => {
                 logger.info('Processing %d messages', messageBatch.length);
                 // Process all messages in the batch concurrently
-                await Promise.all(messageBatch.map(message => processMessage(message)));
+                await Promise.all(messageBatch.map((message: gmail_v1.Schema$Message) => processMessage(message)));
             });
 
             printExportSummary();

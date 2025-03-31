@@ -1,47 +1,51 @@
 /** @type {import('ts-jest').JestConfigWithTsJest} */
 export default {
-    preset: 'ts-jest/presets/default-esm',
-    testEnvironment: 'node',
-    extensionsToTreatAsEsm: ['.ts'],
-    moduleDirectories: ['node_modules', 'src'],
-    moduleNameMapper: {
-        '^(\\.{1,2}/.*)\\.js$': '$1',
-    },
-    transform: {
-        '^.+\\.tsx?$': [
-            'ts-jest',
-            {
-                useESM: true,
-                tsconfig: 'tsconfig.json'
-            }
-        ]
-    },
-    roots: ['<rootDir>/src/', '<rootDir>/tests/'],
-    modulePaths: ['<rootDir>/src/'],
-    maxWorkers: '50%',
-    workerIdleMemoryLimit: '512MB',
-    testTimeout: 30000,
-    setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
-    collectCoverage: true,
+    rootDir: '.',
     collectCoverageFrom: ['src/**/*.ts'],
     coverageDirectory: 'coverage',
     coverageReporters: ['text', 'lcov', 'html'],
     coverageThreshold: {
         global: {
-            statements: 76,
-            branches: 71,
-            functions: 88,
-            lines: 76,
+            branches: 81,
+            functions: 89,
+            lines: 81,
+            statements: 81,
         }
     },
-    verbose: true,
+    extensionsToTreatAsEsm: ['.ts'],
+    maxWorkers: '50%',
+    moduleDirectories: ['node_modules', 'src'],
+    moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
+    moduleNameMapper: {
+        '^(\\.{1,2}/.*)\\.js$': '$1',
+        '^@/(.*)$': '<rootDir>/src/$1',
+        '^@vite/(.*)$': '<rootDir>/src/$1'
+    },
+    modulePaths: ['<rootDir>/src/'],
+    preset: 'ts-jest/presets/default-esm',
+    roots: ['<rootDir>/src/', '<rootDir>/tests/'],
+    // setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
     silent: false,
+    testEnvironment: 'node',
     testEnvironmentOptions: {
         url: 'http://localhost'
     },
-    rootDir: '.',
-    moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json', 'node'],
+    testTimeout: 30000,
+    transform: {
+        '^.+\\.tsx?$': [
+            'ts-jest',
+            {
+                tsconfig: 'tsconfig.json',
+                useESM: true,
+                diagnostics: {
+                    ignoreCodes: [1343]
+                }
+            }
+        ]
+    },
     transformIgnorePatterns: [
         'node_modules/(?!(dayjs)/)'
-    ]
+    ],
+    verbose: true,
+    workerIdleMemoryLimit: '512MB',
 }; 

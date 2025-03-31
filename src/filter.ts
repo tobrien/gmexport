@@ -1,5 +1,5 @@
-import MessageWrapper from './gmail/MessageWrapper.js';
-import { Config as ExportConfig } from './export.d.js';
+import MessageWrapper from './gmail/MessageWrapper';
+import { Config as ExportConfig } from './export.d';
 
 export const create = (config: ExportConfig) => {
 

@@ -1,14 +1,7 @@
-import * as yaml from 'js-yaml';
-import * as Storage from './util/storage.js';
-import { getLogger } from './logging.js';
-import { deepMerge } from './util/general.js';
-import { Input } from './arguments.js';
-import { DEFAULT_CHARACTER_ENCODING, DEFAULT_CREDENTIALS_FILE, DEFAULT_DESTINATION_DIR, DEFAULT_FILENAME_OPTIONS, DEFAULT_OUTPUT_STRUCTURE, DEFAULT_SCOPES, DEFAULT_TOKEN_FILE } from './constants.js';
-
 // Update the REQUIRED_FIELDS type definition for better type safety
 type Field = {
     name: string;
-    variable: keyof Config | keyof Input;
+    variable: keyof Config | keyof InputParameters;
     default: any;
     validations?: FieldValidation[];
 };

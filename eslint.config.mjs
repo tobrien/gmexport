@@ -20,9 +20,7 @@ export default defineConfig([
     globalIgnores([
         "dist/**",
         "node_modules/**",
-        "tests/**",
         "**/*.test.ts",
-        "**/*.test.js",
     ]),
     {
         extends: compat.extends("eslint:recommended", "plugin:@typescript-eslint/recommended"),
@@ -54,11 +52,12 @@ export default defineConfig([
                 SwitchCase: 1,
             }],
 
-            "import/extensions": ["error", "always", {
+            "import/extensions": ["error", "never", {
                 ignorePackages: true,
                 pattern: {
-                    "js": "always",
-                    "ts": "always"
+                    "js": "never",
+                    "ts": "never",
+                    "d": "always"
                 }
             }],
 

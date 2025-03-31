@@ -1,5 +1,5 @@
 import winston from 'winston';
-import { DATE_FORMAT_YEAR_MONTH_DAY_HOURS_MINUTES_SECONDS, PROGRAM_NAME } from './constants.js';
+import { DATE_FORMAT_YEAR_MONTH_DAY_HOURS_MINUTES_SECONDS, PROGRAM_NAME } from './constants';
 
 export interface LogContext {
     [key: string]: any;

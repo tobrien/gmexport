@@ -1,7 +1,7 @@
 // eslint-disable-next-line no-restricted-imports
 import dayjs from 'dayjs';
-import timezone from 'dayjs/plugin/timezone.js';
-import utc from 'dayjs/plugin/utc.js';
+import timezone from 'dayjs/plugin/timezone';
+import utc from 'dayjs/plugin/utc';
 // eslint-disable-next-line no-restricted-imports
 import moment from 'moment-timezone';
 

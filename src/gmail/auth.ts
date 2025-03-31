@@ -2,15 +2,11 @@ import { OAuth2Client } from 'google-auth-library';
 import { google } from 'googleapis';
 import * as path from 'path';
 import * as readline from 'readline';
-import { getLogger } from '../logging.js';
-import * as Storage from '../util/storage.js';
-import * as Export from '../export.js';
-
-export interface Instance {
-    authorize: () => Promise<OAuth2Client>;
-}
-
-export const create = async (config: Export.Config): Promise<Instance> => {
+import { getLogger } from '../logging';
+import * as Storage from '../util/storage';
+import { Config as ExportConfig } from '../export.d';
+import { Instance } from './auth.d';
+export const create = async (config: ExportConfig): Promise<Instance> => {
     const logger = getLogger();
     const storage = Storage.create({});
 

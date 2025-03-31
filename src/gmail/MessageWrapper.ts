@@ -1,5 +1,5 @@
 import { gmail_v1 } from 'googleapis';
-import { MessageHeaders } from '../types.js';
+import { MessageHeaders } from '../types';
 
 // Wrapper class to make header access more ergonomic
 export default class MessageWrapper {

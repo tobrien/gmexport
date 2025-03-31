@@ -1,6 +1,6 @@
-import { DATE_FORMAT_DAY, DATE_FORMAT_MONTH_DAY, DATE_FORMAT_YEAR_MONTH_DAY } from './constants.js';
-import { FilenameOption, OutputStructure } from './export.d.js';
-import * as Dates from './util/dates.js';
+import { DATE_FORMAT_DAY, DATE_FORMAT_MONTH_DAY, DATE_FORMAT_YEAR_MONTH_DAY } from './constants';
+import { FilenameOption, OutputStructure } from './export.d';
+import * as Dates from './util/dates';
 
 export function formatFilename(
     messageId: string,

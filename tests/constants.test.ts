@@ -33,7 +33,6 @@ import {
 
 describe('constants', () => {
     it('should have correct string values', () => {
-        expect(VERSION).toBe('mainbranch');
         expect(PROGRAM_NAME).toBe('gmexport');
         expect(DEFAULT_CHARACTER_ENCODING).toBe('utf-8');
         expect(DEFAULT_BINARY_TO_TEXT_ENCODING).toBe('base64');

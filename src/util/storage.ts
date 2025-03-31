@@ -32,6 +32,7 @@ export const create = (params: { log?: (message: string, ...args: any[]) => void
         try {
             await fs.promises.stat(path);
             return true;
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
         } catch (error: any) {
             return false;
         }
