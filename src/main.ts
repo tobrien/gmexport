@@ -7,8 +7,13 @@ import { Config as ExportConfig } from './export.d';
 import { configure, connect, exportEmails, ExitError } from './phases';
 import { Input as ArgumentsInput } from './arguments.d';
 import { Instance as GmailExportInstance } from './gmailExport.d';
+import { PROGRAM_NAME, VERSION } from './constants';
 
 export async function main() {
+
+    // eslint-disable-next-line no-console
+    console.info(`Starting ${PROGRAM_NAME}: ${VERSION}`);
+
     const program = new Command();
     Arguments.configure(program);
     program.parse();
