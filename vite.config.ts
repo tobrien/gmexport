@@ -3,6 +3,7 @@ import { VitePluginNode } from 'vite-plugin-node';
 import replace from '@rollup/plugin-replace';
 // import { visualizer } from 'rollup-plugin-visualizer';
 import { execSync } from 'child_process';
+import shebang from 'rollup-plugin-preserve-shebang';
 
 const gitInfo = {
     branch: execSync('git rev-parse --abbrev-ref HEAD').toString().trim(),
@@ -54,8 +55,12 @@ export default defineConfig({
                 entryFileNames: '[name].js',
                 preserveModules: true,
                 validate: true,
-                sourcemap: true,
             },
+            plugins: [
+                shebang({
+                    header: '#!/usr/bin/env node',
+                }),
+            ],
         },
     },
 }); 
