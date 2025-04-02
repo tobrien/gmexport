@@ -7,3 +7,6 @@ token.json
 .vscode
 coverage/
 exports/
+export/
+out
+test
