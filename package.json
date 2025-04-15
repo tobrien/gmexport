@@ -1,6 +1,6 @@
 {
     "name": "@tobrien/gmexport",
-    "version": "0.0.13",
+    "version": "0.0.14",
     "description": "Export GMail",
     "main": "dist/main.js",
     "type": "module",
