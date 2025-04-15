@@ -15,11 +15,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: npm ci
-      - run: npm run lint
-      - run: npm run build
-      - run: npm test -- --coverage
+      - uses: pnpm/action-setup@v4
+      - run: pnpm install --frozen-lockfile --strict-peer-dependencies
+      - run: pnpm run lint
+      - run: pnpm run build
+      - run: pnpm test --coverage
       - uses: codecov/codecov-action@v5
         with:
-          slug: tobrien/gmexport
+          slug: tobrien/summnir
           token: ${{ secrets.CODECOV_TOKEN }}

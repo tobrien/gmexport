@@ -7,6 +7,11 @@
     "bin": {
         "gmexport": "./dist/main.js"
     },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/tobrien/gmexport.git"
+    },
+    "packageManager": "pnpm@10.8.1",
     "scripts": {
         "build": "vite build",
         "start": "node dist/main.js",
@@ -50,6 +55,7 @@
         "@types/winston": "^2.4.4",
         "@typescript-eslint/eslint-plugin": "^8.28.0",
         "@typescript-eslint/parser": "^8.28.0",
+        "eslint": "^9.24.0",
         "eslint-plugin-import": "^2.31.0",
         "globals": "^16.0.0",
         "jest": "^29.7.0",
