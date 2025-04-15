@@ -36,7 +36,7 @@ describe('constants', () => {
         expect(PROGRAM_NAME).toBe('gmexport');
         expect(DEFAULT_CHARACTER_ENCODING).toBe('utf-8');
         expect(DEFAULT_BINARY_TO_TEXT_ENCODING).toBe('base64');
-        expect(DEFAULT_DESTINATION_DIR).toBe('./exports');
+        expect(DEFAULT_DESTINATION_DIR).toBe('./exports/gmail');
         expect(DEFAULT_CREDENTIALS_FILE).toBe('./credentials.json');
         expect(DEFAULT_TOKEN_FILE).toBe('./token.json');
         expect(DEFAULT_TIMEZONE).toBe('Etc/UTC');
