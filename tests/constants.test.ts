@@ -36,7 +36,7 @@ describe('constants', () => {
         expect(PROGRAM_NAME).toBe('gmexport');
         expect(DEFAULT_CHARACTER_ENCODING).toBe('utf-8');
         expect(DEFAULT_BINARY_TO_TEXT_ENCODING).toBe('base64');
-        expect(DEFAULT_DESTINATION_DIR).toBe('./exports');
+        expect(DEFAULT_DESTINATION_DIR).toBe('./exports/gmail');
         expect(DEFAULT_CREDENTIALS_FILE).toBe('./credentials.json');
         expect(DEFAULT_TOKEN_FILE).toBe('./token.json');
         expect(DEFAULT_TIMEZONE).toBe('Etc/UTC');
@@ -51,7 +51,7 @@ describe('constants', () => {
         expect(DATE_FORMAT_YEAR_MONTH_DAY_HOURS_MINUTES).toBe('YYYY-MM-DD-HHmm');
         expect(DATE_FORMAT_YEAR_MONTH_DAY_HOURS_MINUTES_SECONDS).toBe('YYYY-MM-DD-HHmmss');
         expect(DATE_FORMAT_YEAR_MONTH_DAY_HOURS_MINUTES_SECONDS_MILLISECONDS).toBe('YYYY-MM-DD-HHmmss.SSS');
-        expect(DATE_FORMAT_MONTH).toBe('MM');
+        expect(DATE_FORMAT_MONTH).toBe('M');
         expect(DATE_FORMAT_DAY).toBe('DD');
         expect(DATE_FORMAT_HOURS).toBe('HHmm');
         expect(DATE_FORMAT_MINUTES).toBe('mm');
