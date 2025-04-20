@@ -6,7 +6,7 @@ import { Instance as GmailApiInstance } from '../src/gmail/api.d';
 import { Instance as GmailExportInstance } from '../src/gmailExport.d';
 import { Config as RunConfig, ConfigError } from '../src/run'; // Import RunConfig type AND ConfigError from run
 import { ArgumentError } from '../src/error/ArgumentError'; // Keep ArgumentError if used
-import { Cabazooka } from '@tobrien/cabazooka'; // Import Cabazooka type
+import { Cabazooka, Operator as CabazookaOperator } from '@tobrien/cabazooka'; // Import Cabazooka type AND Operator
 // import { ConfigError } from '../src/error/ConfigError'; // Removed - Import from run
 // import { ExitError } from '../src/error/ExitError'; // Removed - Will import from phases
 
@@ -35,6 +35,13 @@ const mockCabazookaInstance: Partial<jest.Mocked<Cabazooka>> = {
     // Define only necessary methods if called directly in phases
     // configure: jest.fn().mockResolvedValue({} as Command), // Example if needed
     // validate: jest.fn().mockResolvedValue(undefined), // Example if needed
+};
+
+// Define mockOperator
+const mockOperator: jest.Mocked<CabazookaOperator> = {
+    constructOutputDirectory: jest.fn<() => Promise<string>>().mockResolvedValue('/tmp/output/2023/01'),
+    constructFilename: jest.fn<(createDate: Date, type: string, hash: string, options?: { subject?: string }) => Promise<string>>().mockResolvedValue('email_2023-01-15_msg1'),
+    process: jest.fn<(callback: (file: string) => Promise<void>) => Promise<void>>().mockResolvedValue(undefined),
 };
 
 
@@ -107,6 +114,10 @@ describe('Phases Module', () => {
         // Reset calls on mock instance methods if they exist and are used
         if (mockAuthInstance.authorize) mockAuthInstance.authorize.mockClear();
         if (mockGmailInstance.exportEmails) mockGmailInstance.exportEmails.mockClear();
+        // Reset operator mocks
+        mockOperator.constructOutputDirectory.mockClear().mockResolvedValue('/tmp/output/2023/01');
+        mockOperator.constructFilename.mockClear().mockResolvedValue('email_2023-01-15_msg1');
+        mockOperator.process.mockClear().mockResolvedValue(undefined);
     });
 
     describe('configure', () => {
@@ -156,19 +167,19 @@ describe('Phases Module', () => {
 
     describe('connect', () => {
         it('should successfully create Gmail instance', async () => {
-            const result = await Phases.connect(sampleRunConfig, mockLogger);
+            const result = await Phases.connect(sampleRunConfig, mockLogger, mockOperator);
             expect(result).toBe(mockGmailInstance as GmailExportInstance);
             expect(mockAuthCreate).toHaveBeenCalledWith(sampleRunConfig);
             expect(mockAuthInstance.authorize).toHaveBeenCalled();
             expect(mockGmailApiCreate).toHaveBeenCalledWith(expect.any(Object));
-            expect(mockGmailExportCreate).toHaveBeenCalledWith(sampleRunConfig, mockApiInstance as GmailApiInstance);
+            expect(mockGmailExportCreate).toHaveBeenCalledWith(sampleRunConfig, mockApiInstance as GmailApiInstance, mockOperator);
         });
 
         it('should handle connection errors by throwing ExitError', async () => {
             const mockError = new Error('Auth create failed');
             // @ts-ignore
             mockAuthCreate.mockRejectedValue(mockError);
-            await expect(Phases.connect(sampleRunConfig, mockLogger)).rejects.toThrow(ExitError);
+            await expect(Phases.connect(sampleRunConfig, mockLogger, mockOperator)).rejects.toThrow(ExitError);
             expect(mockLogger.error).toHaveBeenCalledWith(
                 'Error occurred during connection phase: %s %s',
                 mockError.message,

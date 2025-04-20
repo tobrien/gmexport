@@ -43,9 +43,19 @@ export async function main() {
     const logger = getLogger();
 
     try {
-
         const runConfig: Run.Config = await configure(options, logger, cabazooka);
-        const gmail: GmailExportInstance = await connect(runConfig, logger);
+        // Create config needed for the operator
+        const operatorConfig: Cabazooka.Config = {
+            outputDirectory: runConfig.outputDirectory,
+            outputStructure: runConfig.outputStructure,
+            filenameOptions: runConfig.filenameOptions,
+            timezone: runConfig.timezone,
+            recursive: false, // Placeholder/default
+            inputDirectory: '', // Placeholder/default
+            extensions: ['.eml'], // Placeholder/default - assuming EML extension
+        };
+        const operator = await cabazooka.operate(operatorConfig); // Create the operator
+        const gmail: GmailExportInstance = await connect(runConfig, logger, operator); // Pass operator to connect
         await exportEmails(gmail, runConfig, logger);
 
     } catch (error: any) {

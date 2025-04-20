@@ -7,7 +7,7 @@ import * as Run from './run';
 import { Logger } from 'winston';
 import { ArgumentError } from './error/ArgumentError';
 import { Instance as GmailExportInstance } from './gmailExport.d';
-import { Cabazooka } from '@tobrien/cabazooka';
+import { Cabazooka, Operator as CabazookaOperator } from '@tobrien/cabazooka';
 import { Input } from './arguments';
 
 export class ExitError extends Error {
@@ -27,14 +27,14 @@ export async function exportEmails(gmail: GmailExportInstance, runConfig: Run.Co
     }
 }
 
-export async function connect(runConfig: Run.Config, logger: Logger): Promise<GmailExportInstance> {
+export async function connect(runConfig: Run.Config, logger: Logger, operator: CabazookaOperator): Promise<GmailExportInstance> {
     let gmail: GmailExportInstance;
 
     try {
         const authInstance = await Auth.create(runConfig);
         const auth = await authInstance.authorize();
         const api = GmailApi.create(auth);
-        gmail = GmailExport.create(runConfig, api);
+        gmail = GmailExport.create(runConfig, api, operator);
     } catch (error: any) {
         logger.error('Error occurred during connection phase: %s %s', error.message, error.stack);
         throw new ExitError('Error occurred during connection phase');

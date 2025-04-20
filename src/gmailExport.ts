@@ -1,55 +1,37 @@
+import { Operator as CabazookaOperator } from '@tobrien/cabazooka';
 import { gmail_v1 } from 'googleapis';
 import * as path from 'path';
-import { DATE_FORMAT_DAY, DATE_FORMAT_MONTH, DATE_FORMAT_YEAR, DEFAULT_CHARACTER_ENCODING } from './constants';
-import * as Filename from './filename';
+import { DEFAULT_CHARACTER_ENCODING } from './constants';
 import * as Filter from './filter';
+import { Instance as GmailApiInstance } from './gmail/api.d';
 import MessageWrapper from './gmail/MessageWrapper';
 import { createQuery } from './gmail/query';
+import { Instance } from './gmailExport.d';
 import { getLogger } from './logging';
 import * as Run from './run';
 import { DateRange } from './run';
 import * as Dates from './util/dates';
 import * as Storage from './util/storage';
-import { Instance as GmailApiInstance } from './gmail/api.d';
-import { Instance } from './gmailExport.d';
-import { FilenameOption, OutputStructure } from '@tobrien/cabazooka';
 
 
-function getEmailFilePath(
-    baseDir: string,
+async function getEmailFilePath(
+    operator: CabazookaOperator,
     messageId: string,
     dateHeader: string,
-    outputStructure: OutputStructure,
     subject: string,
     timezone: string,
-    filenameOptions: FilenameOption[],
-): string {
+): Promise<string> {
     const dates = Dates.create({ timezone });
     const storage = Storage.create({});
 
     const date = dates.date(dateHeader);
-    const year = dates.format(date, DATE_FORMAT_YEAR);
-    const month = dates.format(date, DATE_FORMAT_MONTH);
-    const day = dates.format(date, DATE_FORMAT_DAY);
 
-    let dirPath: string;
-    switch (outputStructure) {
-        case 'year':
-            dirPath = path.join(baseDir, year);
-            break;
-        case 'month':
-            dirPath = path.join(baseDir, year, month);
-            break;
-        case 'day':
-            dirPath = path.join(baseDir, year, month, day);
-            break;
-        default:
-            dirPath = baseDir;
-    }
+    const dirPath = await operator.constructOutputDirectory(date);
+    const baseFilename = operator.constructFilename(date, 'email', messageId, { subject });
 
-    storage.createDirectory(dirPath);
-    const filename = Filename.formatFilename(messageId, date, subject, timezone, filenameOptions, outputStructure);
-    return path.join(dirPath, filename);
+    await storage.createDirectory(dirPath);
+
+    return path.join(dirPath, `${baseFilename}.eml`);
 }
 
 function foldHeaderLine(name: string, value: string): string {
@@ -79,7 +61,7 @@ function foldHeaderLine(name: string, value: string): string {
     return result;
 }
 
-export const create = (runConfig: Run.Config, api: GmailApiInstance): Instance => {
+export const create = (runConfig: Run.Config, api: GmailApiInstance, operator: CabazookaOperator): Instance => {
     const logger = getLogger();
     const filter = Filter.create(runConfig);
     const userId = 'me';
@@ -118,14 +100,12 @@ export const create = (runConfig: Run.Config, api: GmailApiInstance): Instance =
                 return;
             }
 
-            const filePath = getEmailFilePath(
-                runConfig.outputDirectory,
+            const filePath = await getEmailFilePath(
+                operator,
                 messageId!,
                 wrappedMessage.date,
-                runConfig.outputStructure,
                 wrappedMessage.subject || 'No Subject',
                 runConfig.timezone,
-                runConfig.filenameOptions
             );
 
             // Skip if file already exists

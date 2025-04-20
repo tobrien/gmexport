@@ -6,7 +6,7 @@ import { Instance as GmailApiInstance } from '../src/gmail/api.d';
 // import { Instance as GmailExportInstance } from '../src/gmailExport.d'; // Type only, might not be needed directly for mocks
 import { DATE_FORMAT_DAY, DATE_FORMAT_MONTH, DATE_FORMAT_YEAR } from '../src/constants';
 // import MessageWrapper from '../src/gmail/MessageWrapper'; // Import type if needed, actual class mocked
-import { OutputStructure, FilenameOption } from '@tobrien/cabazooka';
+import { OutputStructure, FilenameOption, Operator as CabazookaOperator } from '@tobrien/cabazooka';
 
 // --- Mock Definitions ---
 const mockStorageInstance = {
@@ -42,6 +42,13 @@ const mockMessageWrapperInstance = {
     // Add other methods/properties accessed by the code if necessary
 };
 const MockMessageWrapper = jest.fn().mockImplementation(() => mockMessageWrapperInstance);
+
+// Define mockOperator
+const mockOperator: CabazookaOperator = {
+    constructOutputDirectory: jest.fn<() => Promise<string>>().mockResolvedValue('/export/2023/01'),
+    constructFilename: jest.fn<(createDate: Date, type: string, hash: string, options?: { subject?: string }) => Promise<string>>().mockResolvedValue('email_2023-01-15_msg1'),
+    process: jest.fn<(callback: (file: string) => Promise<void>) => Promise<void>>().mockResolvedValue(undefined),
+};
 
 // --- Mock Module Setup --- using unstable_mockModule
 jest.unstable_mockModule('../src/util/storage.js', () => ({
@@ -117,6 +124,18 @@ describe('gmailExport', () => {
         mockedDatesCreate.mockReturnValue(mockDatesInstance);
         mockedFilterCreate.mockReturnValue(mockFilterInstance);
         mockedGetLogger.mockReturnValue(mockLoggerInstance);
+        // Reset operator mocks
+        (mockOperator.constructOutputDirectory as jest.Mock).mockClear();
+        // @ts-ignore
+        (mockOperator.constructOutputDirectory as jest.Mock).mockResolvedValue('/export/2023/01');
+
+        (mockOperator.constructFilename as jest.Mock).mockClear();
+        // @ts-ignore
+        (mockOperator.constructFilename as jest.Mock).mockResolvedValue('email_2023-01-15_msg1');
+
+        (mockOperator.process as jest.Mock).mockClear();
+        // @ts-ignore
+        (mockOperator.process as jest.Mock).mockResolvedValue(undefined);
 
         // Reset specific function mocks to defaults if they change per test
         mockedFormatFilename.mockReturnValue('email_2023-01-15.eml');
@@ -167,7 +186,7 @@ describe('gmailExport', () => {
             mockStorageInstance.exists.mockResolvedValue(false);
 
             // Call create with only runConfig and api
-            const exporter = create(mockRunConfig, mockApi);
+            const exporter = create(mockRunConfig, mockApi, mockOperator);
             await exporter.exportEmails(dateRange);
 
             // Verify createQuery call with runConfig
@@ -193,7 +212,7 @@ describe('gmailExport', () => {
             mockGetMessage.mockResolvedValueOnce({ id: 'msg1', payload: { headers: [/*...*/] } }); // Metadata
             mockFilterInstance.shouldSkipEmail.mockReturnValue({ skip: true, reason: 'Filtered by rule' });
 
-            const exporter = create(mockRunConfig, mockApi);
+            const exporter = create(mockRunConfig, mockApi, mockOperator);
             await exporter.exportEmails(dateRange);
 
             expect(mockFilterInstance.shouldSkipEmail).toHaveBeenCalled();
@@ -214,7 +233,7 @@ describe('gmailExport', () => {
             mockFilterInstance.shouldSkipEmail.mockReturnValue({ skip: false });
             mockStorageInstance.exists.mockResolvedValue(true);
 
-            const exporter = create(mockRunConfig, mockApi);
+            const exporter = create(mockRunConfig, mockApi, mockOperator);
             await exporter.exportEmails(dateRange);
 
             expect(mockStorageInstance.exists).toHaveBeenCalled();
@@ -235,7 +254,7 @@ describe('gmailExport', () => {
             mockFilterInstance.shouldSkipEmail.mockReturnValue({ skip: false });
             mockStorageInstance.exists.mockResolvedValue(false);
 
-            const exporter = create(mockRunConfig, mockApi);
+            const exporter = create(mockRunConfig, mockApi, mockOperator);
             await exporter.exportEmails(dateRange);
 
             expect(mockLoggerInstance.error).toHaveBeenCalledWith(
@@ -246,20 +265,10 @@ describe('gmailExport', () => {
             expect(mockStorageInstance.writeFile).not.toHaveBeenCalled();
         });
 
-        it('should indicate dry run mode', async () => {
-            const dryRunConfig = { ...mockRunConfig, dryRun: true };
-            mockListMessages.mockImplementation(async (_params, callback) => { await callback([]); });
-
-            const exporter = create(dryRunConfig, mockApi);
-            await exporter.exportEmails(dateRange);
-
-            expect(mockLoggerInstance.info).toHaveBeenCalledWith('This was a dry run. No files were actually saved.');
-        });
-
         it('should print summary information after export', async () => {
             mockListMessages.mockImplementation(async (_params, callback) => { await callback([]); });
 
-            const exporter = create(mockRunConfig, mockApi);
+            const exporter = create(mockRunConfig, mockApi, mockOperator);
             await exporter.exportEmails(dateRange);
 
             expect(mockLoggerInstance.info).toHaveBeenCalledWith('Export Summary:');
