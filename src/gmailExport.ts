@@ -1,7 +1,6 @@
 import { gmail_v1 } from 'googleapis';
 import * as path from 'path';
 import { DATE_FORMAT_DAY, DATE_FORMAT_MONTH, DATE_FORMAT_YEAR, DEFAULT_CHARACTER_ENCODING } from './constants';
-import { Config as ExportConfig } from './export.d';
 import * as Filename from './filename';
 import * as Filter from './filter';
 import MessageWrapper from './gmail/MessageWrapper';
@@ -80,9 +79,9 @@ function foldHeaderLine(name: string, value: string): string {
     return result;
 }
 
-export const create = (runConfig: Run.Config, exportConfig: ExportConfig, api: GmailApiInstance): Instance => {
+export const create = (runConfig: Run.Config, api: GmailApiInstance): Instance => {
     const logger = getLogger();
-    const filter = Filter.create(exportConfig);
+    const filter = Filter.create(runConfig);
     const userId = 'me';
     const storage = Storage.create({});
 
@@ -120,13 +119,13 @@ export const create = (runConfig: Run.Config, exportConfig: ExportConfig, api: G
             }
 
             const filePath = getEmailFilePath(
-                exportConfig.outputDirectory,
+                runConfig.outputDirectory,
                 messageId!,
                 wrappedMessage.date,
-                exportConfig.outputStructure,
+                runConfig.outputStructure,
                 wrappedMessage.subject || 'No Subject',
                 runConfig.timezone,
-                exportConfig.filenameOptions
+                runConfig.filenameOptions
             );
 
             // Skip if file already exists
@@ -165,7 +164,7 @@ export const create = (runConfig: Run.Config, exportConfig: ExportConfig, api: G
 
     async function exportEmails(dateRange: DateRange): Promise<void> {
         try {
-            const query = createQuery(dateRange, exportConfig, runConfig.timezone);
+            const query = createQuery(dateRange, runConfig, runConfig.timezone);
             await api.listMessages({ userId, q: query }, async (messageBatch) => {
                 logger.info('Processing %d messages', messageBatch.length);
                 // Process all messages in the batch concurrently

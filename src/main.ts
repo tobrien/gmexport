@@ -3,7 +3,6 @@ import { Command } from 'commander';
 import * as Arguments from './arguments';
 import { getLogger, setLogLevel } from './logging';
 import * as Run from './run';
-import { Config as ExportConfig } from './export.d';
 import { configure, connect, exportEmails, ExitError } from './phases';
 import { Instance as GmailExportInstance } from './gmailExport.d';
 import { ALLOWED_FILENAME_OPTIONS, ALLOWED_OUTPUT_STRUCTURES, DEFAULT_FILENAME_OPTIONS, DEFAULT_OUTPUT_DIRECTORY, DEFAULT_OUTPUT_STRUCTURE, DEFAULT_TIMEZONE, PROGRAM_NAME, VERSION } from './constants';
@@ -45,8 +44,8 @@ export async function main() {
 
     try {
 
-        const { exportConfig, runConfig }: { exportConfig: ExportConfig; runConfig: Run.Config; } = await configure(options, logger, cabazooka);
-        const gmail: GmailExportInstance = await connect(exportConfig, runConfig, logger);
+        const runConfig: Run.Config = await configure(options, logger, cabazooka);
+        const gmail: GmailExportInstance = await connect(runConfig, logger);
         await exportEmails(gmail, runConfig, logger);
 
     } catch (error: any) {

@@ -1,158 +1,174 @@
+import { jest } from '@jest/globals';
+import { Logger } from 'winston';
+import { Command } from 'commander';
 import { Instance as AuthInstance } from '../src/gmail/auth.d';
 import { Instance as GmailApiInstance } from '../src/gmail/api.d';
-
-const mockAuth = {
-    // @ts-ignore
-    authorize: jest.fn().mockResolvedValue({}),
-} as unknown as AuthInstance;
-
-jest.unstable_mockModule('../src/gmail/auth', () => ({
-    __esModule: true,
-    // @ts-ignore
-    create: jest.fn().mockResolvedValue(mockAuth),
-}));
-
-jest.unstable_mockModule('../src/arguments', () => ({
-    __esModule: true,
-    generateConfig: jest.fn(),
-    ArgumentError: jest.fn(),
-}));
-
-jest.unstable_mockModule('../src/gmail/api', () => ({
-    __esModule: true,
-    create: jest.fn(),
-}));
-
-jest.unstable_mockModule('../src/gmailExport', () => ({
-    __esModule: true,
-    create: jest.fn(),
-}));
-
-let Auth: any;
-let Arguments: any;
-let GmailApi: any;
-let GmailExport: any;
-let Phases: any;
-
-import { jest } from '@jest/globals';
-import { Command } from 'commander';
-import { ArgumentError } from 'error/ArgumentError';
-import { Logger } from 'winston';
 import { Instance as GmailExportInstance } from '../src/gmailExport.d';
-// Mock all external dependencies
-jest.mock('commander');
-jest.mock('../src/run');
-jest.mock('../src/export');
+import { Config as RunConfig, ConfigError } from '../src/run'; // Import RunConfig type AND ConfigError from run
+import { ArgumentError } from '../src/error/ArgumentError'; // Keep ArgumentError if used
+import { Cabazooka } from '@tobrien/cabazooka'; // Import Cabazooka type
+// import { ConfigError } from '../src/error/ConfigError'; // Removed - Import from run
+// import { ExitError } from '../src/error/ExitError'; // Removed - Will import from phases
+
+// --- Mock Instances/Values (Simpler) ---
+const mockLogger = {
+    info: jest.fn(),
+    debug: jest.fn(),
+    error: jest.fn(),
+    warn: jest.fn(),
+} as unknown as jest.Mocked<Logger>; // Keep unknown cast for Logger
+
+const mockGmailInstance: Partial<jest.Mocked<GmailExportInstance>> = {
+    exportEmails: jest.fn<() => Promise<void>>(),
+    printExportSummary: jest.fn<() => void>(),
+};
+
+const mockAuthInstance: Partial<jest.Mocked<AuthInstance>> = {
+    authorize: jest.fn<() => Promise<any>>().mockResolvedValue({}),
+};
+
+const mockApiInstance: Partial<jest.Mocked<GmailApiInstance>> = {
+    // Define only if methods are directly called, otherwise empty
+};
+
+const mockCabazookaInstance: Partial<jest.Mocked<Cabazooka>> = {
+    // Define only necessary methods if called directly in phases
+    // configure: jest.fn().mockResolvedValue({} as Command), // Example if needed
+    // validate: jest.fn().mockResolvedValue(undefined), // Example if needed
+};
+
+
+// --- Mock Module Setup (Exporting functions) ---
+jest.unstable_mockModule('../src/gmail/auth', () => ({
+    // @ts-ignore
+    create: jest.fn().mockResolvedValue(mockAuthInstance as AuthInstance),
+}));
+jest.unstable_mockModule('../src/run', () => ({
+    createConfig: jest.fn(), // Let tests define resolve/reject
+    ConfigError: ConfigError,
+}));
+jest.unstable_mockModule('../src/gmail/api', () => ({
+    create: jest.fn().mockReturnValue(mockApiInstance as GmailApiInstance),
+}));
+jest.unstable_mockModule('../src/gmailExport', () => ({
+    create: jest.fn().mockReturnValue(mockGmailInstance as GmailExportInstance),
+}));
+jest.unstable_mockModule('../src/logging', () => ({
+    getLogger: jest.fn().mockReturnValue(mockLogger),
+}));
+
+
+// --- Dynamic Imports (after mocks) ---
+const Auth = await import('../src/gmail/auth');
+const Run = await import('../src/run');
+const GmailApi = await import('../src/gmail/api');
+const GmailExport = await import('../src/gmailExport');
+const Phases = await import('../src/phases');
+const Logging = await import('../src/logging');
+const { ExitError } = await import('../src/phases');
+
+// --- Assign Mocks (Get the mocked functions) ---
+const mockAuthCreate = Auth.create as jest.Mock;
+const mockRunCreateConfig = Run.createConfig as jest.Mock;
+const mockGmailApiCreate = GmailApi.create as jest.Mock;
+const mockGmailExportCreate = GmailExport.create as jest.Mock;
+const mockGetLogger = Logging.getLogger as jest.Mock;
+
+// --- Test Suite ---
+
+// Define a sample RunConfig for reuse (defined at top level)
+const sampleRunConfig: RunConfig = {
+    dateRange: { start: new Date(), end: new Date() },
+    dryRun: false,
+    verbose: false,
+    timezone: 'UTC',
+    outputDirectory: '/tmp/output',
+    outputStructure: 'month' as const,
+    filenameOptions: ['date' as const],
+    credentialsFile: 'creds.json',
+    tokenFile: 'token.json',
+    apiScopes: ['scope1'],
+    filters: { exclude: {}, include: {} },
+};
 
 describe('Phases Module', () => {
-    let mockLogger: jest.Mocked<Logger>;
-    let mockGmailInstance: jest.Mocked<GmailExportInstance>;
-    let mockAuthInstance: jest.Mocked<AuthInstance>;
-    let mockApi: jest.Mocked<GmailApiInstance>;
-    let mockProgram: jest.Mocked<Command>;
 
-    beforeEach(async () => {
-        // Reset all mocks before each test
+    beforeEach(() => {
         jest.clearAllMocks();
 
-        Auth = await import('../src/gmail/auth');
-        Arguments = await import('../src/arguments');
-        GmailApi = await import('../src/gmail/api');
-        GmailExport = await import('../src/gmailExport');
-        Phases = await import('../src/phases');
+        // Reset implementations/values using the assigned mock variables
+        // @ts-ignore
+        mockAuthCreate.mockResolvedValue(mockAuthInstance as AuthInstance);
+        mockGmailApiCreate.mockReturnValue(mockApiInstance as GmailApiInstance);
+        mockGmailExportCreate.mockReturnValue(mockGmailInstance as GmailExportInstance);
+        mockGetLogger.mockReturnValue(mockLogger);
+        mockRunCreateConfig.mockClear();
 
-        // Setup mock logger
-        mockLogger = {
-            info: jest.fn(),
-            error: jest.fn(),
-        } as any;
-
-        // Setup mock Gmail instance
-        mockGmailInstance = {
-            exportEmails: jest.fn(),
-        } as any;
-
-        // Setup mock auth instance
-        mockAuthInstance = {
-            authorize: jest.fn(),
-        } as any;
-
-        // Setup mock API
-        mockApi = {} as any;
-
-        // Setup mock program
-        mockProgram = {
-            parse: jest.fn(),
-            opts: jest.fn(),
-        } as any;
+        // Reset calls on mock instance methods if they exist and are used
+        if (mockAuthInstance.authorize) mockAuthInstance.authorize.mockClear();
+        if (mockGmailInstance.exportEmails) mockGmailInstance.exportEmails.mockClear();
     });
 
     describe('configure', () => {
-        it('should successfully generate configurations', async () => {
+        it('should successfully generate configurations by calling Run.createConfig', async () => {
             const mockOptions = { verbose: true, credentialsFile: 'value', tokenFile: 'value' };
-            const mockRunConfig = { someConfig: 'value' };
-            const mockExportConfig = { exportConfig: 'value' };
-            const mockCabazooka = { someConfig: 'value' };
-            // @ts-ignore
-            (Arguments.generateConfig as jest.Mock).mockResolvedValue([mockRunConfig, mockExportConfig]);
+            const mockRunConfigResult = { ...sampleRunConfig, verbose: true };
 
             // @ts-ignore
-            const result = await Phases.configure(mockOptions, mockLogger, mockCabazooka);
+            mockRunCreateConfig.mockResolvedValue(mockRunConfigResult);
 
-            expect(result).toEqual({
-                exportConfig: mockExportConfig,
-                runConfig: mockRunConfig,
-            });
-            expect(Arguments.generateConfig).toHaveBeenCalledWith(mockOptions, mockCabazooka);
-            expect(mockLogger.info).toHaveBeenCalledTimes(2);
+            // Pass mockCabazooka directly (as any for simplicity if needed)
+            const result = await Phases.configure(mockOptions as any, mockLogger, mockCabazookaInstance as Cabazooka);
+
+            expect(result).toEqual(mockRunConfigResult);
+            expect(mockRunCreateConfig).toHaveBeenCalled();
+            expect(mockLogger.info).toHaveBeenCalledWith(expect.stringContaining('Run Configuration'), expect.any(String));
+        });
+
+        it('should handle Run.ConfigError by throwing ExitError', async () => {
+            const mockOptions = { verbose: true };
+            const configError = new Run.ConfigError('Invalid config value');
+
+            // @ts-ignore
+            mockRunCreateConfig.mockRejectedValue(configError);
+
+            await expect(Phases.configure(mockOptions as any, mockLogger, mockCabazookaInstance as Cabazooka)).rejects.toThrow(ExitError);
+            expect(mockLogger.error).toHaveBeenCalledWith(
+                expect.stringContaining('An Error occurred configuring this run'),
+                configError.message
+            );
         });
 
         it('should handle ArgumentError by throwing ExitError', async () => {
-            const mockOptions = { verbose: true };
-            const mockError = new ArgumentError('test', 'test message');
-
+            // Simulate error during date parsing within Phases.configure
+            // Pass invalid options directly, expect internal ConfigError to be caught
+            // Need to mock createConfig to throw the error
+            const argError = new Run.ConfigError('Invalid start date format: invalid');
             // @ts-ignore
-            (Arguments.generateConfig as jest.Mock).mockRejectedValue(mockError);
-
-            // @ts-ignore
-            await expect(Phases.configure(mockOptions, mockLogger)).rejects.toThrow(Phases.ExitError);
-            expect(mockLogger.error).toHaveBeenCalledWith('There was an error with a command line argument');
+            mockRunCreateConfig.mockRejectedValue(argError);
+            await expect(Phases.configure({ start: 'invalid' } as any, mockLogger, mockCabazookaInstance as Cabazooka)).rejects.toThrow(ExitError);
+            expect(mockLogger.error).toHaveBeenCalledWith(
+                expect.stringContaining('An Error occurred configuring'), // Catches the ConfigError
+                expect.stringContaining('Invalid start date format: invalid') // The message from ConfigError
+            );
         });
     });
 
     describe('connect', () => {
         it('should successfully create Gmail instance', async () => {
-            const mockExportConfig = { exportConfig: 'value' };
-            const mockRunConfig = { runConfig: 'value' };
-
-            // @ts-ignore
-            (Auth.create as jest.Mock).mockResolvedValue(mockAuthInstance);
-
-            // @ts-ignore
-            mockAuthInstance.authorize.mockResolvedValue({});
-            // @ts-ignore
-            (GmailApi.create as jest.Mock).mockReturnValue(mockApi);
-            // @ts-ignore
-            (GmailExport.create as jest.Mock).mockReturnValue(mockGmailInstance);
-
-            // @ts-ignore
-            const result = await Phases.connect(mockExportConfig, mockRunConfig, mockLogger);
-
-            expect(result).toBe(mockGmailInstance);
-            expect(Auth.create).toHaveBeenCalledWith(mockExportConfig);
-            expect(GmailExport.create).toHaveBeenCalledWith(mockRunConfig, mockExportConfig, mockApi);
+            const result = await Phases.connect(sampleRunConfig, mockLogger);
+            expect(result).toBe(mockGmailInstance as GmailExportInstance);
+            expect(mockAuthCreate).toHaveBeenCalledWith(sampleRunConfig);
+            expect(mockAuthInstance.authorize).toHaveBeenCalled();
+            expect(mockGmailApiCreate).toHaveBeenCalledWith(expect.any(Object));
+            expect(mockGmailExportCreate).toHaveBeenCalledWith(sampleRunConfig, mockApiInstance as GmailApiInstance);
         });
 
         it('should handle connection errors by throwing ExitError', async () => {
-            const mockExportConfig = { exportConfig: 'value' };
-            const mockRunConfig = { runConfig: 'value' };
-            const mockError = new Error('Connection failed');
-
+            const mockError = new Error('Auth create failed');
             // @ts-ignore
-            (Auth.create as jest.Mock).mockRejectedValue(mockError);
-
-            // @ts-ignore
-            await expect(Phases.connect(mockExportConfig, mockRunConfig, mockLogger)).rejects.toThrow(Phases.ExitError);
+            mockAuthCreate.mockRejectedValue(mockError);
+            await expect(Phases.connect(sampleRunConfig, mockLogger)).rejects.toThrow(ExitError);
             expect(mockLogger.error).toHaveBeenCalledWith(
                 'Error occurred during connection phase: %s %s',
                 mockError.message,
@@ -163,22 +179,18 @@ describe('Phases Module', () => {
 
     describe('exportEmails', () => {
         it('should successfully export emails', async () => {
-            const mockDateRange = { start: new Date(), end: new Date() };
-            mockGmailInstance.exportEmails.mockResolvedValue(undefined);
-
-            // @ts-ignore
-            await Phases.exportEmails(mockGmailInstance, { dateRange: mockDateRange }, mockLogger);
-
-            expect(mockGmailInstance.exportEmails).toHaveBeenCalledWith(mockDateRange);
+            await Phases.exportEmails(mockGmailInstance as GmailExportInstance, sampleRunConfig, mockLogger);
+            expect(mockGmailInstance.exportEmails).toHaveBeenCalledWith(sampleRunConfig.dateRange);
         });
 
         it('should handle export errors by throwing ExitError', async () => {
-            const mockDateRange = { start: new Date(), end: new Date() };
             const mockError = new Error('Export failed');
-            mockGmailInstance.exportEmails.mockRejectedValue(mockError);
-
-            // @ts-ignore
-            await expect(Phases.exportEmails(mockGmailInstance, { dateRange: mockDateRange }, mockLogger)).rejects.toThrow(Phases.ExitError);
+            // Ensure the mock function exists before setting its behavior
+            if (mockGmailInstance.exportEmails) {
+                // @ts-ignore
+                (mockGmailInstance.exportEmails as jest.Mock).mockRejectedValue(mockError);
+            }
+            await expect(Phases.exportEmails(mockGmailInstance as GmailExportInstance, sampleRunConfig, mockLogger)).rejects.toThrow(ExitError);
             expect(mockLogger.error).toHaveBeenCalledWith(
                 'Error occurred during export phase: %s %s',
                 mockError.message,

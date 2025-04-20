@@ -1,7 +1,7 @@
 import MessageWrapper from './gmail/MessageWrapper';
-import { Config as ExportConfig } from './export.d';
+import * as Run from './run';
 
-export const create = (config: ExportConfig) => {
+export const create = (config: Run.Config) => {
 
     function checkInclusiveFilters(message: MessageWrapper): { skip: boolean; reason?: string } | null {
 

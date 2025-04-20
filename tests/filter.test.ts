@@ -1,23 +1,28 @@
-import { Config as ExportConfig } from '../src/export.d.js';
+import { Config as RunConfig } from '../src/run.js';
 import * as Filter from '../src/filter.js';
 import MessageWrapper from '../src/gmail/MessageWrapper.js';
+import { OutputStructure, FilenameOption } from '@tobrien/cabazooka';
 
 describe('filter', () => {
-    let config: ExportConfig;
+    let config: RunConfig;
     let message: MessageWrapper;
 
     beforeEach(() => {
         config = {
             outputDirectory: '',
-            outputStructure: 'year',
-            filenameOptions: ['date'],
+            outputStructure: 'year' as OutputStructure,
+            filenameOptions: ['date' as FilenameOption],
             credentialsFile: '',
             tokenFile: '',
             apiScopes: [],
             filters: {
                 exclude: {},
                 include: {}
-            }
+            },
+            dateRange: { start: new Date(), end: new Date() },
+            dryRun: false,
+            verbose: false,
+            timezone: 'UTC',
         };
 
         message = {
