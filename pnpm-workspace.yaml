@@ -1,3 +1,0 @@
-overrides:
-  '@tobrien/cabazooka': link:../cabazooka
-  cabazooka: link:../../../Library/pnpm/global/5/node_modules/@tobrien/cabazooka
