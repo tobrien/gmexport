@@ -7,9 +7,11 @@ import * as Run from './run';
 import * as Export from './export';
 import { Logger } from 'winston';
 import { Config as ExportConfig } from './export.d';
-import { Input as ArgumentsInput } from './arguments.d';
 import { ArgumentError } from './error/ArgumentError';
 import { Instance as GmailExportInstance } from './gmailExport.d';
+import { Cabazooka } from '@tobrien/cabazooka';
+import { Input } from './arguments';
+
 export class ExitError extends Error {
     constructor(message: string) {
         super(message);
@@ -42,11 +44,11 @@ export async function connect(exportConfig: ExportConfig, runConfig: Run.Config,
     return gmail;
 }
 
-export async function configure(options: ArgumentsInput, logger: Logger): Promise<{ exportConfig: ExportConfig; runConfig: Run.Config; }> {
+export async function configure(options: Input, logger: Logger, cabazooka: Cabazooka): Promise<{ exportConfig: ExportConfig; runConfig: Run.Config; }> {
     let runConfig: Run.Config;
     let exportConfig: ExportConfig;
     try {
-        [runConfig, exportConfig] = await Arguments.generateConfig(options);
+        [runConfig, exportConfig] = await Arguments.generateConfig(options, cabazooka);
         logger.info('\n\n\tRun Configuration: %s', JSON.stringify(runConfig, null, 2).replace(/\n/g, '\n\t') + '\n\n');
         logger.info('\n\n\tExport Configuration: %s', JSON.stringify(exportConfig, null, 2).replace(/\n/g, '\n\t') + '\n\n');
     } catch (error: any) {

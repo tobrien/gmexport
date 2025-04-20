@@ -1,16 +1,30 @@
 import { Command } from "commander";
+import { ALLOWED_FILENAME_OPTIONS, ALLOWED_OUTPUT_STRUCTURES, ALLOWED_SCOPES, DEFAULT_CURRENT_MONTH, DEFAULT_DRY_RUN, DEFAULT_VERBOSE, PROGRAM_NAME, VERSION } from "./constants";
+import { ArgumentError } from "./error/ArgumentError";
 import * as Export from "./export";
-import { FilenameOption, OutputStructure, Config as ExportConfig } from "./export.d";
+import { Config as ExportConfig } from "./export.d";
 import { getLogger } from "./logging";
 import * as Run from "./run";
 import * as Dates from "./util/dates";
 import * as Storage from "./util/storage";
-import { ALLOWED_FILENAME_OPTIONS, ALLOWED_OUTPUT_STRUCTURES, ALLOWED_SCOPES, DEFAULT_CURRENT_MONTH, DEFAULT_DRY_RUN, DEFAULT_TIMEZONE, DEFAULT_VERBOSE, PROGRAM_NAME, VERSION } from "./constants";
-import { Input } from "./arguments.d";
-import { ArgumentError } from "./error/ArgumentError";
+import { Cabazooka, Input as CabazookaInput } from "@tobrien/cabazooka";
+import { FilenameOption, OutputStructure } from "@tobrien/cabazooka";
 
-export const configure = (program: Command) => {
-    program
+export interface Input extends CabazookaInput {
+    currentMonth: boolean;
+    dryRun: boolean;
+    verbose: boolean;
+    config?: string;
+    start?: string;
+    end?: string;
+    credentialsFile?: string;
+    tokenFile?: string;
+    apiScopes?: string[];
+}
+
+export const configure = async (program: Command, cabazooka: Cabazooka): Promise<Command> => {
+    let retProgram = program;
+    retProgram
         .name(PROGRAM_NAME)
         .summary('Export Gmail messages within a date range to local files')
         .description('Export Gmail messages within a date range to local files')
@@ -19,79 +33,71 @@ export const configure = (program: Command) => {
         .option('--current-month', 'export emails from the first day of the current month to today, cannot be used together with either --start or --end options', DEFAULT_CURRENT_MONTH)
         .option('--dry-run', 'perform a dry run without saving files', DEFAULT_DRY_RUN)
         .option('--verbose', 'enable debug logging', DEFAULT_VERBOSE)
-        .option('--timezone <timezone>', 'timezone for date calculations', DEFAULT_TIMEZONE)
         .option('--config <path>', 'Path to configuration file')
-        .option('--output-directory <path>', 'destination directory for exported emails')
-        .option('--output-structure <type>', 'output directory structure (none/year/month/day)')
-        .option('--filename-options [filenameOptions...]', 'filename format options (space-separated list of: date,time,subject) example \'date subject\'', ['date', 'subject'])
         .option('--credentials-file <path>', 'path to credentials file for Gmail API')
         .option('--token-file <path>', 'path to token file for Gmail API')
         .option('--api-scopes [apiScopes...]', 'API scopes (space-separated list of scopes) for Gmail API')
-        .version(VERSION);
+
+    retProgram = await cabazooka.configure(retProgram);
+    retProgram.version(VERSION);
+    return retProgram;
 }
 
-export const generateConfig = async (options: Input): Promise<[Run.Config, ExportConfig]> => {
+export const generateConfig = async (input: Input, cabazooka: Cabazooka): Promise<[Run.Config, ExportConfig]> => {
 
-    // Validate timezone
-    const timezone: string = validateTimezone(options.timezone);
+
+    const cabazookaRunConfig = await cabazooka.validate(input);
 
     // Validate start date format if provided
-    if (options.start && !/^\d{4}-\d{2}-\d{2}$/.test(options.start)) {
+    if (input.start && !/^\d{4}-\d{2}-\d{2}$/.test(input.start)) {
         throw new ArgumentError('--start', 'must be in YYYY-MM-DD format');
     }
 
     // Validate end date format if provided
-    if (options.end && !/^\d{4}-\d{2}-\d{2}$/.test(options.end)) {
+    if (input.end && !/^\d{4}-\d{2}-\d{2}$/.test(input.end)) {
         throw new ArgumentError('--end', 'must be in YYYY-MM-DD format');
     }
 
     // Validate that --current-month is not used with other date options
-    if (options.currentMonth && (options.start || options.end)) {
+    if (input.currentMonth && (input.start || input.end)) {
         throw new ArgumentError('--current-month', 'cannot be used together with either --start or --end options');
     }
 
     // Validate the config exists, if you supplied it
-    await validateConfig(options.config);
-
-    // Validate the output argument, this will throw an error if the directory does not exist or is not writable
-    await validateOutputDirectory(options.outputDirectory);
-
-    // Validate filename options if provided
-    validateOutputStructure(options.outputStructure);
-    validateFilenameOptions(options.filenameOptions, options.outputStructure as OutputStructure);
+    await validateConfig(input.config);
 
     // Validate credentials file
-    await validateCredentialsFile(options.credentialsFile);
+    await validateCredentialsFile(input.credentialsFile);
 
     // Validate token file
-    await validateTokenFile(options.tokenFile);
+    await validateTokenFile(input.tokenFile);
 
     // Validate API scopes
-    validateApiScopes(options.apiScopes);
+    validateApiScopes(input.apiScopes);
 
     // Create date parser
-    const dates = Dates.create({ timezone });
-    const startDate: Date | undefined = options.start ? dates.parse(options.start, 'YYYY-MM-DD') : undefined;
-    const endDate: Date | undefined = options.end ? dates.parse(options.end, 'YYYY-MM-DD') : undefined;
+    const dates = Dates.create({ timezone: cabazookaRunConfig.timezone });
+    const startDate: Date | undefined = input.start ? dates.parse(input.start, 'YYYY-MM-DD') : undefined;
+    const endDate: Date | undefined = input.end ? dates.parse(input.end, 'YYYY-MM-DD') : undefined;
 
     // Create the run configuration
     const runConfig = Run.createConfig({
         start: startDate,
         end: endDate,
-        currentMonth: options.currentMonth,
-        dryRun: options.dryRun,
-        verbose: options.verbose,
-        timezone: timezone,
+        currentMonth: input.currentMonth,
+        dryRun: input.dryRun,
+        verbose: input.verbose,
+        timezone: cabazookaRunConfig.timezone,
     });
 
     // Create the export configuration
     const exportConfig = await Export.createConfig({
-        outputStructure: options.outputStructure as OutputStructure,
-        filenameOptions: options.filenameOptions as FilenameOption[],
-        outputDirectory: options.outputDirectory,
-        credentialsFile: options.credentialsFile,
-        tokenFile: options.tokenFile,
-        apiScopes: options.apiScopes,
+        outputStructure: cabazookaRunConfig.outputStructure as OutputStructure,
+        filenameOptions: cabazookaRunConfig.filenameOptions as FilenameOption[],
+        outputDirectory: cabazookaRunConfig.outputDirectory,
+        credentialsFile: input.credentialsFile,
+        tokenFile: input.tokenFile,
+        apiScopes: input.apiScopes,
     });
 
     return [runConfig, exportConfig];

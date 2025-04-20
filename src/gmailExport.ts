@@ -1,7 +1,7 @@
 import { gmail_v1 } from 'googleapis';
 import * as path from 'path';
 import { DATE_FORMAT_DAY, DATE_FORMAT_MONTH, DATE_FORMAT_YEAR, DEFAULT_CHARACTER_ENCODING } from './constants';
-import { Config as ExportConfig, FilenameOption, OutputStructure } from './export.d';
+import { Config as ExportConfig } from './export.d';
 import * as Filename from './filename';
 import * as Filter from './filter';
 import MessageWrapper from './gmail/MessageWrapper';
@@ -13,6 +13,8 @@ import * as Dates from './util/dates';
 import * as Storage from './util/storage';
 import { Instance as GmailApiInstance } from './gmail/api.d';
 import { Instance } from './gmailExport.d';
+import { FilenameOption, OutputStructure } from '@tobrien/cabazooka';
+
 
 function getEmailFilePath(
     baseDir: string,

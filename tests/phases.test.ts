@@ -92,18 +92,18 @@ describe('Phases Module', () => {
             const mockOptions = { verbose: true, credentialsFile: 'value', tokenFile: 'value' };
             const mockRunConfig = { someConfig: 'value' };
             const mockExportConfig = { exportConfig: 'value' };
-
+            const mockCabazooka = { someConfig: 'value' };
             // @ts-ignore
             (Arguments.generateConfig as jest.Mock).mockResolvedValue([mockRunConfig, mockExportConfig]);
 
             // @ts-ignore
-            const result = await Phases.configure(mockOptions, mockLogger);
+            const result = await Phases.configure(mockOptions, mockLogger, mockCabazooka);
 
             expect(result).toEqual({
                 exportConfig: mockExportConfig,
                 runConfig: mockRunConfig,
             });
-            expect(Arguments.generateConfig).toHaveBeenCalledWith(mockOptions);
+            expect(Arguments.generateConfig).toHaveBeenCalledWith(mockOptions, mockCabazooka);
             expect(mockLogger.info).toHaveBeenCalledTimes(2);
         });
 

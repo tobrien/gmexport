@@ -1,7 +1,6 @@
 import { DATE_FORMAT_DAY, DATE_FORMAT_MONTH_DAY, DATE_FORMAT_YEAR_MONTH_DAY } from './constants';
-import { FilenameOption, OutputStructure } from './export.d';
 import * as Dates from './util/dates';
-
+import { FilenameOption, OutputStructure } from '@tobrien/cabazooka';
 export function formatFilename(
     messageId: string,
     date: Date,

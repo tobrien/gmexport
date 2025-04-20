@@ -1,6 +1,6 @@
 {
     "name": "@tobrien/gmexport",
-    "version": "0.0.14",
+    "version": "0.1.0",
     "description": "Export GMail",
     "main": "dist/main.js",
     "type": "module",
@@ -31,6 +31,7 @@
     "author": "Tim O'Brien <tobrien@discursive.com>",
     "license": "Apache-2.0",
     "dependencies": {
+        "@tobrien/cabazooka": "^0.1.0",
         "commander": "^13.1.0",
         "dayjs": "^1.11.13",
         "dotenv": "^16.4.7",

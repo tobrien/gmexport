@@ -1,4 +1,4 @@
-import { FilenameOption, OutputStructure } from "./export.d";
+import { FilenameOption, OutputStructure } from "@tobrien/cabazooka";
 
 export const VERSION = '__VERSION__ (__GIT_BRANCH__/__GIT_COMMIT__ __GIT_TAGS__ __GIT_COMMIT_DATE__) __SYSTEM_INFO__';
 export const PROGRAM_NAME = 'gmexport';
@@ -28,6 +28,7 @@ export const DEFAULT_FILENAME_OPTIONS = ['date', 'subject'] as FilenameOption[];
 export const DEFAULT_VERBOSE = false;
 export const DEFAULT_DRY_RUN = false;
 export const DEFAULT_CURRENT_MONTH = false;
+export const DEFAULT_OUTPUT_DIRECTORY = './output';
 
 export const ALLOWED_SCOPES = [
     'https://www.googleapis.com/auth/gmail.addons.current.action.compose',

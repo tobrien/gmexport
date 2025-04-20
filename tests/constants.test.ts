@@ -1,4 +1,4 @@
-import { FilenameOption, OutputStructure } from '../src/export.d.js';
+import { FilenameOption, OutputStructure } from '@tobrien/cabazooka';
 import {
     VERSION,
     PROGRAM_NAME,

@@ -1,3 +1,5 @@
+import { FilenameOption, OutputStructure } from "@tobrien/cabazooka";
+
 // Update the REQUIRED_FIELDS type definition for better type safety
 type Field = {
     name: string;
@@ -7,9 +9,6 @@ type Field = {
 };
 
 type FieldValidation = (field: Field, config: Partial<Config>) => Promise<void>;
-
-export type FilenameOption = 'date' | 'time' | 'subject';
-export type OutputStructure = 'none' | 'year' | 'month' | 'day';
 
 export interface MessageFilter {
     labels?: string[];
