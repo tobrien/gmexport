@@ -1,5 +1,5 @@
 import { formatFilename } from '../src/filename.js';
-import { FilenameOption, OutputStructure } from '../src/export.d.js';
+import { FilenameOption, OutputStructure } from '@tobrien/cabazooka';
 import { jest } from '@jest/globals';
 
 describe('filename', () => {

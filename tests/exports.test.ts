@@ -18,9 +18,9 @@ let validateRequiredFields: any;
 
 // Import constants using static imports which work fine
 import { DEFAULT_CREDENTIALS_FILE, DEFAULT_DESTINATION_DIR, DEFAULT_FILENAME_OPTIONS, DEFAULT_OUTPUT_STRUCTURE, DEFAULT_SCOPES, DEFAULT_TOKEN_FILE } from '../src/constants.js';
-import { Config, FilenameOption, OutputStructure } from '../src/export.d.js';
+import { Config } from '../src/export.d.js';
 import { getLogger } from '../src/logging.js';
-
+import { FilenameOption, OutputStructure } from '@tobrien/cabazooka';
 // Mock general utility
 jest.mock('../src/util/general.js', () => ({
     deepMerge: jest.fn((target: any, source: any) => ({ ...target, ...source }))

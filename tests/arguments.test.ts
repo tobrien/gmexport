@@ -59,10 +59,14 @@ jest.mock('../src/export.js', () => ({
 // Load all dynamic imports before tests
 beforeAll(async () => {
     Storage = await import('../src/util/storage.js');
+    console.error('Storage', Storage);
     mockRun = await import('../src/run.js');
+    console.error('mockRun', mockRun);
     mockExport = await import('../src/export.js');
+    console.error('mockExport', mockExport);
 
     const argumentsModule = await import('../src/arguments.js');
+    console.error('argumentsModule', argumentsModule);
     configure = argumentsModule.configure;
     generateConfig = argumentsModule.generateConfig;
     validateApiScopes = argumentsModule.validateApiScopes;
@@ -87,8 +91,14 @@ describe('arguments', () => {
         mockIsDirectoryWritable.mockResolvedValue(true);
         mockCreateDirectory.mockResolvedValue(undefined);
 
+        // Mock Cabazooka
+        const mockCabazooka = {
+            configure: jest.fn(async (prog) => prog) // Mock configure to return the program
+        };
+
         program = new Command();
-        configure(program);
+        // Pass the mock Cabazooka instance
+        configure(program, mockCabazooka as any);
     });
 
     describe('configure', () => {

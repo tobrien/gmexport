@@ -2,7 +2,7 @@ import * as yaml from 'js-yaml';
 import * as Storage from './util/storage';
 import { getLogger } from './logging';
 import { deepMerge } from './util/general';
-import { Input } from './arguments.d';
+import { Input } from './arguments';
 import { DEFAULT_CHARACTER_ENCODING, DEFAULT_CREDENTIALS_FILE, DEFAULT_DESTINATION_DIR, DEFAULT_FILENAME_OPTIONS, DEFAULT_OUTPUT_STRUCTURE, DEFAULT_SCOPES, DEFAULT_TOKEN_FILE } from './constants';
 import { FieldValidation, Config, InputParameters, Field } from './export.d';
 

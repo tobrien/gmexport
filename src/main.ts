@@ -5,20 +5,37 @@ import { getLogger, setLogLevel } from './logging';
 import * as Run from './run';
 import { Config as ExportConfig } from './export.d';
 import { configure, connect, exportEmails, ExitError } from './phases';
-import { Input as ArgumentsInput } from './arguments.d';
 import { Instance as GmailExportInstance } from './gmailExport.d';
-import { PROGRAM_NAME, VERSION } from './constants';
+import { ALLOWED_FILENAME_OPTIONS, ALLOWED_OUTPUT_STRUCTURES, DEFAULT_FILENAME_OPTIONS, DEFAULT_OUTPUT_DIRECTORY, DEFAULT_OUTPUT_STRUCTURE, DEFAULT_TIMEZONE, PROGRAM_NAME, VERSION } from './constants';
+import * as Cabazooka from '@tobrien/cabazooka';
+import { Input } from './arguments';
 
 export async function main() {
 
     // eslint-disable-next-line no-console
     console.info(`Starting ${PROGRAM_NAME}: ${VERSION}`);
 
+    const cabazookaOptions = Cabazooka.createOptions({
+        defaults: {
+            timezone: DEFAULT_TIMEZONE,
+            outputStructure: DEFAULT_OUTPUT_STRUCTURE,
+            filenameOptions: DEFAULT_FILENAME_OPTIONS,
+            outputDirectory: DEFAULT_OUTPUT_DIRECTORY,
+        },
+        allowed: {
+            outputStructures: ALLOWED_OUTPUT_STRUCTURES,
+            filenameOptions: ALLOWED_FILENAME_OPTIONS,
+        },
+        features: ['output', 'structured-output'],
+    });
+
+    const cabazooka = Cabazooka.create(cabazookaOptions);
+
     const program = new Command();
-    Arguments.configure(program);
+    Arguments.configure(program, cabazooka);
     program.parse();
 
-    const options: ArgumentsInput = program.opts();
+    const options: Input = program.opts();
 
     // Set log level based on verbose flag
     if (options.verbose) {
@@ -28,7 +45,7 @@ export async function main() {
 
     try {
 
-        const { exportConfig, runConfig }: { exportConfig: ExportConfig; runConfig: Run.Config; } = await configure(options, logger);
+        const { exportConfig, runConfig }: { exportConfig: ExportConfig; runConfig: Run.Config; } = await configure(options, logger, cabazooka);
         const gmail: GmailExportInstance = await connect(exportConfig, runConfig, logger);
         await exportEmails(gmail, runConfig, logger);
 
