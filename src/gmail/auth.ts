@@ -4,9 +4,10 @@ import * as path from 'path';
 import * as readline from 'readline';
 import { getLogger } from '../logging';
 import * as Storage from '../util/storage';
-import { Config as ExportConfig } from '../export.d';
+import * as Run from '../run';
 import { Instance } from './auth.d';
-export const create = async (config: ExportConfig): Promise<Instance> => {
+
+export const create = async (config: Run.Config): Promise<Instance> => {
     const logger = getLogger();
     const storage = Storage.create({});
 

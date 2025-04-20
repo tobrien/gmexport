@@ -1,92 +1,101 @@
 import { describe, test, expect, jest, beforeEach, beforeAll } from '@jest/globals';
-import { Config } from '../../src/export.d';
+import { Config as RunConfig, DateRange } from '../../src/run';
 import { DATE_FORMAT_YEAR_MONTH_DAY_SLASH } from '../../src/constants';
+import { OutputStructure, FilenameOption } from '@tobrien/cabazooka';
 
-// Mock logger
-const mockLogger = {
-    info: jest.fn(),
+// Define mock instances types (can be more specific if needed)
+type MockLogger = { info: jest.Mock<() => void> };
+type MockDatesInstance = {
+    format: jest.Mock<(date: Date | string, format: string) => string>;
+    addDays: jest.Mock<(date: Date, days: number) => Date | string>;
 };
 
-// Mock date utilities
-const mockDates = {
+// Mock dependencies using unstable_mockModule
+const mockLogger: MockLogger = {
+    info: jest.fn(),
+};
+const mockDatesInstance: MockDatesInstance = {
     format: jest.fn(),
     addDays: jest.fn(),
 };
 
-const mockCreate = jest.fn().mockReturnValue(mockDates);
-
-// Mock modules using jest.unstable_mockModule
 jest.unstable_mockModule('../../src/logging', () => ({
-    __esModule: true,
-    getLogger: jest.fn().mockReturnValue(mockLogger)
+    getLogger: jest.fn(() => mockLogger),
 }));
-
 jest.unstable_mockModule('../../src/util/dates', () => ({
-    __esModule: true,
-    create: mockCreate
+    create: jest.fn(() => mockDatesInstance),
 }));
 
-// Variables for dynamically imported modules
-let createQuery: any;
-let printGmailQueryInfo: any;
-let getLogger: any;
 
-// Load all dependencies before tests
-beforeAll(async () => {
-    const queryModule = await import('../../src/gmail/query');
-    createQuery = queryModule.createQuery;
-    printGmailQueryInfo = queryModule.printGmailQueryInfo;
+// --- Dynamic Imports (after mocks) ---
+const { createQuery, printGmailQueryInfo } = await import('../../src/gmail/query');
+const Logging = await import('../../src/logging');
+const Dates = await import('../../src/util/dates');
 
-    const loggingModule = await import('../../src/logging');
-    getLogger = loggingModule.getLogger;
-});
-
+// Use describe block without async
 describe('Gmail Query Module', () => {
+    // Dynamically import modules after mocks are set up -> Moved outside
+    // const { createQuery, printGmailQueryInfo } = await import('../../src/gmail/query');
+    // const Logging = await import('../../src/logging');
+    // const Dates = await import('../../src/util/dates');
+
+    // Re-assign mocked functions for easier access in tests if needed
+    // Note: Direct access via mockLogger and mockDatesInstance is often clearer
+    const mockedGetLogger = Logging.getLogger as jest.Mock;
+    const mockedCreateDates = Dates.create as jest.Mock;
+
     beforeEach(() => {
         jest.clearAllMocks();
+        // Reset mocks if necessary, though direct mock function calls are reset by clearAllMocks
+        mockedGetLogger.mockReturnValue(mockLogger); // Ensure getLogger returns the mock instance
+        mockedCreateDates.mockReturnValue(mockDatesInstance); // Ensure create returns the mock instance
     });
 
     describe('createQuery', () => {
         const timezone = 'America/New_York';
-        const dateRange = {
+        const dateRange: DateRange = {
             start: new Date('2023-01-01'),
             end: new Date('2023-01-31'),
         };
 
-        // Base config with required fields
-        const baseConfig: Config = {
+        const baseConfig: RunConfig = {
             outputDirectory: '/output',
-            outputStructure: 'year',
-            filenameOptions: ['date', 'subject'],
+            outputStructure: 'year' as OutputStructure,
+            filenameOptions: ['date' as FilenameOption, 'subject' as FilenameOption],
             credentialsFile: 'credentials.json',
             tokenFile: 'token.json',
-            apiScopes: ['https://www.googleapis.com/auth/gmail.readonly']
+            apiScopes: ['https://www.googleapis.com/auth/gmail.readonly'],
+            dateRange: dateRange,
+            dryRun: false,
+            verbose: false,
+            timezone: timezone,
+            filters: {}
         };
 
         beforeEach(() => {
-            mockDates.format.mockImplementation((date, format) => {
-                if (date === dateRange.start) return '2023/01/01';
-                if (date === 'adjusted_end_date') return '2023/02/01';
+            mockDatesInstance.format.mockImplementation((date, format) => {
+                if (date === dateRange.start && format === DATE_FORMAT_YEAR_MONTH_DAY_SLASH) return '2023/01/01';
+                if (date === 'adjusted_end_date' && format === DATE_FORMAT_YEAR_MONTH_DAY_SLASH) return '2023/02/01';
                 return '';
             });
-
-            mockDates.addDays.mockReturnValue('adjusted_end_date');
+            mockDatesInstance.addDays.mockReturnValue('adjusted_end_date' as any);
         });
 
         test('should create basic date range query', () => {
-            const config: Config = { ...baseConfig, filters: {} };
+            const config: RunConfig = { ...baseConfig, filters: {} };
 
             const result = createQuery(dateRange, config, timezone);
 
-            expect(mockCreate).toHaveBeenCalledWith({ timezone });
-            expect(mockDates.format).toHaveBeenCalledWith(dateRange.start, DATE_FORMAT_YEAR_MONTH_DAY_SLASH);
-            expect(mockDates.addDays).toHaveBeenCalledWith(dateRange.end, 1);
-            expect(mockDates.format).toHaveBeenCalledWith('adjusted_end_date', DATE_FORMAT_YEAR_MONTH_DAY_SLASH);
+            expect(mockedCreateDates).toHaveBeenCalledWith({ timezone });
+            expect(mockDatesInstance.format).toHaveBeenCalledWith(dateRange.start, DATE_FORMAT_YEAR_MONTH_DAY_SLASH);
+            expect(mockDatesInstance.addDays).toHaveBeenCalledWith(dateRange.end, 1);
+            expect(mockDatesInstance.format).toHaveBeenCalledWith('adjusted_end_date', DATE_FORMAT_YEAR_MONTH_DAY_SLASH);
             expect(result).toBe('after:2023/01/01 before:2023/02/01');
+            expect(mockLogger.info).toHaveBeenCalledWith(expect.stringContaining('Gmail search parameters:'));
         });
 
         test('should add include labels to query', () => {
-            const config: Config = {
+            const config: RunConfig = {
                 ...baseConfig,
                 filters: {
                     include: {
@@ -94,14 +103,12 @@ describe('Gmail Query Module', () => {
                     }
                 }
             };
-
             const result = createQuery(dateRange, config, timezone);
-
             expect(result).toBe('after:2023/01/01 before:2023/02/01 label:important OR label:work');
         });
 
         test('should add exclude labels to query', () => {
-            const config: Config = {
+            const config: RunConfig = {
                 ...baseConfig,
                 filters: {
                     exclude: {
@@ -109,14 +116,12 @@ describe('Gmail Query Module', () => {
                     }
                 }
             };
-
             const result = createQuery(dateRange, config, timezone);
-
             expect(result).toBe('after:2023/01/01 before:2023/02/01 -label:spam AND -label:trash');
         });
 
         test('should handle both include and exclude labels', () => {
-            const config: Config = {
+            const config: RunConfig = {
                 ...baseConfig,
                 filters: {
                     include: {
@@ -127,14 +132,12 @@ describe('Gmail Query Module', () => {
                     }
                 }
             };
-
             const result = createQuery(dateRange, config, timezone);
-
             expect(result).toBe('after:2023/01/01 before:2023/02/01 label:important -label:spam');
         });
 
         test('should handle empty filter arrays', () => {
-            const config: Config = {
+            const config: RunConfig = {
                 ...baseConfig,
                 filters: {
                     include: {
@@ -145,9 +148,7 @@ describe('Gmail Query Module', () => {
                     }
                 }
             };
-
             const result = createQuery(dateRange, config, timezone);
-
             expect(result).toBe('after:2023/01/01 before:2023/02/01');
         });
     });
@@ -162,7 +163,7 @@ describe('Gmail Query Module', () => {
 
             printGmailQueryInfo(afterDate, beforeDate, includeLabels, excludeLabels, query);
 
-            expect(getLogger).toHaveBeenCalled();
+            expect(mockedGetLogger).toHaveBeenCalled();
             expect(mockLogger.info).toHaveBeenCalledWith('Gmail search parameters:');
             expect(mockLogger.info).toHaveBeenCalledWith(`\tDate range: ${afterDate} to ${beforeDate}`);
             expect(mockLogger.info).toHaveBeenCalledWith(`\tInclude labels: ${includeLabels.join(', ')}`);

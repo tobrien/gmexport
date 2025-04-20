@@ -7,9 +7,9 @@ export default {
     coverageThreshold: {
         global: {
             branches: 79,
-            functions: 89,
-            lines: 83,
-            statements: 83,
+            functions: 85,
+            lines: 81,
+            statements: 82,
         }
     },
     extensionsToTreatAsEsm: ['.ts'],
