@@ -60,7 +60,6 @@ jest.unstable_mockModule('../src/util/dates.js', () => ({
 jest.unstable_mockModule('../src/filter.js', () => ({
     create: jest.fn(() => mockFilterInstance),
 }));
-jest.unstable_mockModule('../src/filename.js', () => mockFilenameFunctions);
 jest.unstable_mockModule('../src/gmail/query.js', () => mockGmailQueryFunctions);
 jest.unstable_mockModule('../src/logging.js', () => ({
     getLogger: jest.fn(() => mockLoggerInstance),
@@ -74,7 +73,6 @@ const { create } = await import('../src/gmailExport.js');
 const Storage = await import('../src/util/storage.js');
 const Dates = await import('../src/util/dates.js');
 const Filter = await import('../src/filter.js');
-const Filename = await import('../src/filename.js');
 const GmailQuery = await import('../src/gmail/query.js');
 const Logging = await import('../src/logging.js');
 // const MessageWrapper = (await import('../src/gmail/MessageWrapper.js')).default; // Import if needed
@@ -84,7 +82,6 @@ const mockedStorageCreate = Storage.create as jest.Mock;
 const mockedDatesCreate = Dates.create as jest.Mock;
 const mockedFilterCreate = Filter.create as jest.Mock;
 const mockedGetLogger = Logging.getLogger as jest.Mock;
-const mockedFormatFilename = Filename.formatFilename as jest.Mock;
 const mockedCreateQuery = GmailQuery.createQuery as jest.Mock;
 
 // --- Test Suite --- (NO longer async)
@@ -138,7 +135,6 @@ describe('gmailExport', () => {
         (mockOperator.process as jest.Mock).mockResolvedValue(undefined);
 
         // Reset specific function mocks to defaults if they change per test
-        mockedFormatFilename.mockReturnValue('email_2023-01-15.eml');
         mockedCreateQuery.mockReturnValue('after:2023/01/01 before:2023/01/31');
         MockMessageWrapper.mockClear(); // Clear constructor calls
         MockMessageWrapper.mockImplementation(() => mockMessageWrapperInstance); // Re-set implementation
