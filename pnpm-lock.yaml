@@ -15,9 +15,6 @@ importers:
       '@tobrien/cabazooka':
         specifier: link:../cabazooka
         version: link:../cabazooka
-      cabazooka:
-        specifier: link:../../../Library/pnpm/global/5/node_modules/@tobrien/cabazooka
-        version: link:../../../Library/pnpm/global/5/node_modules/@tobrien/cabazooka
       commander:
         specifier: ^13.1.0
         version: 13.1.0

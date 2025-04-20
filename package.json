@@ -31,8 +31,7 @@
     "author": "Tim O'Brien <tobrien@discursive.com>",
     "license": "Apache-2.0",
     "dependencies": {
-        "@tobrien/cabazooka": "^0.0.1",
-        "cabazooka": "link:../cabazooka",
+        "@tobrien/cabazooka": "^0.1.0",
         "commander": "^13.1.0",
         "dayjs": "^1.11.13",
         "dotenv": "^16.4.7",
