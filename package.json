@@ -11,7 +11,7 @@
         "type": "git",
         "url": "git+https://github.com/tobrien/gmexport.git"
     },
-    "packageManager": "pnpm@10.8.1",
+    "packageManager": "pnpm@10.9.0",
     "scripts": {
         "build": "vite build",
         "start": "node dist/main.js",
