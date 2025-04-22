@@ -1,13 +1,13 @@
 #!/usr/bin/env node
+import * as Cabazooka from '@tobrien/cabazooka';
 import { Command } from 'commander';
 import * as Arguments from './arguments';
-import { getLogger, setLogLevel } from './logging';
-import * as Run from './run';
-import { configure, connect, exportEmails, ExitError } from './phases';
-import { Instance as GmailExportInstance } from './gmailExport.d';
-import { ALLOWED_FILENAME_OPTIONS, ALLOWED_OUTPUT_STRUCTURES, DEFAULT_FILENAME_OPTIONS, DEFAULT_OUTPUT_DIRECTORY, DEFAULT_OUTPUT_STRUCTURE, DEFAULT_TIMEZONE, PROGRAM_NAME, VERSION } from './constants';
-import * as Cabazooka from '@tobrien/cabazooka';
 import { Input } from './arguments';
+import { ALLOWED_OUTPUT_FILENAME_OPTIONS, ALLOWED_OUTPUT_STRUCTURES, DEFAULT_OUTPUT_DIRECTORY, DEFAULT_OUTPUT_FILENAME_OPTIONS, DEFAULT_OUTPUT_STRUCTURE, DEFAULT_TIMEZONE, PROGRAM_NAME, VERSION } from './constants';
+import { Instance as GmailExportInstance } from './gmailExport.d';
+import { getLogger, setLogLevel } from './logging';
+import { configure, connect, ExitError, exportEmails } from './phases';
+import * as Run from './run';
 
 export async function main() {
 
@@ -18,12 +18,12 @@ export async function main() {
         defaults: {
             timezone: DEFAULT_TIMEZONE,
             outputStructure: DEFAULT_OUTPUT_STRUCTURE,
-            filenameOptions: DEFAULT_FILENAME_OPTIONS,
+            outputFilenameOptions: DEFAULT_OUTPUT_FILENAME_OPTIONS,
             outputDirectory: DEFAULT_OUTPUT_DIRECTORY,
         },
         allowed: {
             outputStructures: ALLOWED_OUTPUT_STRUCTURES,
-            filenameOptions: ALLOWED_FILENAME_OPTIONS,
+            outputFilenameOptions: ALLOWED_OUTPUT_FILENAME_OPTIONS,
         },
         features: ['output', 'structured-output'],
     });
@@ -48,7 +48,7 @@ export async function main() {
         const operatorConfig: Cabazooka.Config = {
             outputDirectory: runConfig.outputDirectory,
             outputStructure: runConfig.outputStructure,
-            filenameOptions: runConfig.filenameOptions,
+            outputFilenameOptions: runConfig.outputFilenameOptions,
             timezone: runConfig.timezone,
             recursive: false, // Placeholder/default
             inputDirectory: '', // Placeholder/default

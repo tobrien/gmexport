@@ -69,7 +69,7 @@ const ConfigError = Run.ConfigError;
 const MOCK_DEFAULTS: Partial<Config> = { // Use Config from dynamic import
     outputDirectory: '/mock/output',
     outputStructure: 'flat' as OutputStructure,
-    filenameOptions: ['date' as FilenameOption],
+    outputFilenameOptions: ['date' as FilenameOption],
     credentialsFile: '/mock/credentials.json',
     tokenFile: '/mock/token.json',
     apiScopes: ['https://www.googleapis.com/auth/gmail.readonly'],
@@ -120,7 +120,7 @@ describe('run', () => {
             const base: Partial<InputParameters> = {
                 outputDirectory: MOCK_DEFAULTS.outputDirectory,
                 outputStructure: 'flat' as OutputStructure,
-                filenameOptions: ['date' as FilenameOption],
+                outputFilenameOptions: ['date' as FilenameOption],
                 timezone: MOCK_DEFAULTS.timezone,
                 dryRun: MOCK_DEFAULTS.dryRun,
                 verbose: MOCK_DEFAULTS.verbose,

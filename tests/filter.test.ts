@@ -11,7 +11,7 @@ describe('filter', () => {
         config = {
             outputDirectory: '',
             outputStructure: 'year' as OutputStructure,
-            filenameOptions: ['date' as FilenameOption],
+            outputFilenameOptions: ['date' as FilenameOption],
             credentialsFile: '',
             tokenFile: '',
             apiScopes: [],

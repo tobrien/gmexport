@@ -9,8 +9,8 @@ importers:
   .:
     dependencies:
       '@tobrien/cabazooka':
-        specifier: ^0.1.0
-        version: 0.1.0
+        specifier: ^0.1.1
+        version: 0.1.1
       commander:
         specifier: ^13.1.0
         version: 13.1.0
@@ -811,8 +811,8 @@ packages:
   '@swc/types@0.1.21':
     resolution: {integrity: sha512-2YEtj5HJVbKivud9N4bpPBAyZhj4S2Ipe5LkUG94alTpr7in/GU/EARgPAd3BwU+YOmFVJC2+kjqhGRi3r0ZpQ==}
 
-  '@tobrien/cabazooka@0.1.0':
-    resolution: {integrity: sha512-efQl+PjcWXiwKrOLCtRkCwZo9r6x9uGBxKSRYN/637drYcMnvDZa4n10vtDSpw7yCvdFUGS2HKUVedXbhL6ihg==}
+  '@tobrien/cabazooka@0.1.1':
+    resolution: {integrity: sha512-WYftd76LD/37dGVGFemvRRoqawStxiCkXrkeZ5zmTr9QrBZHeWgY4/SkTLEsvtxHEhE+Cj2vy7QwmXSDl2Tw1A==}
 
   '@tobrien/minorprompt@0.0.2':
     resolution: {integrity: sha512-cSxFrfyqBlkIycQxIdwqeL5aunQpcTpvQmUSnf+YKdVY+YrI01oAA3G5mPUaEkwKm0f5kpWOw0BXbqmCXsmv9g==}
@@ -3576,7 +3576,7 @@ snapshots:
     dependencies:
       '@swc/counter': 0.1.3
 
-  '@tobrien/cabazooka@0.1.0':
+  '@tobrien/cabazooka@0.1.1':
     dependencies:
       '@tobrien/minorprompt': 0.0.2
       '@types/fluent-ffmpeg': 2.1.27

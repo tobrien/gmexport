@@ -11,7 +11,7 @@
         "type": "git",
         "url": "git+https://github.com/tobrien/gmexport.git"
     },
-    "packageManager": "pnpm@10.8.1",
+    "packageManager": "pnpm@10.9.0",
     "scripts": {
         "build": "vite build",
         "start": "node dist/main.js",
@@ -31,7 +31,7 @@
     "author": "Tim O'Brien <tobrien@discursive.com>",
     "license": "Apache-2.0",
     "dependencies": {
-        "@tobrien/cabazooka": "^0.1.0",
+        "@tobrien/cabazooka": "^0.1.1",
         "commander": "^13.1.0",
         "dayjs": "^1.11.13",
         "dotenv": "^16.4.7",

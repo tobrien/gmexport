@@ -91,7 +91,7 @@ const sampleRunConfig: RunConfig = {
     timezone: 'UTC',
     outputDirectory: '/tmp/output',
     outputStructure: 'month' as const,
-    filenameOptions: ['date' as const],
+    outputFilenameOptions: ['date' as const],
     credentialsFile: 'creds.json',
     tokenFile: 'token.json',
     apiScopes: ['scope1'],
