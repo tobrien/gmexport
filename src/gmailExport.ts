@@ -27,7 +27,7 @@ async function getEmailFilePath(
     const date = dates.date(dateHeader);
 
     const dirPath = await operator.constructOutputDirectory(date);
-    const baseFilename = operator.constructFilename(date, 'email', messageId, { subject });
+    const baseFilename = await operator.constructFilename(date, 'email', messageId, { subject });
 
     await storage.createDirectory(dirPath);
 
