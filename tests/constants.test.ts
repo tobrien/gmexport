@@ -24,7 +24,7 @@ import {
     DEFAULT_TOKEN_FILE,
     DEFAULT_SCOPES,
     DEFAULT_OUTPUT_STRUCTURE,
-    DEFAULT_FILENAME_OPTIONS,
+    DEFAULT_OUTPUT_FILENAME_OPTIONS,
     DEFAULT_VERBOSE,
     DEFAULT_DRY_RUN,
     DEFAULT_CURRENT_MONTH,
@@ -77,8 +77,8 @@ describe('constants', () => {
     });
 
     it('should have correct default filename options', () => {
-        expect(DEFAULT_FILENAME_OPTIONS).toEqual(['date', 'subject']);
-        const isValidFilenameOption: FilenameOption[] = DEFAULT_FILENAME_OPTIONS;
+        expect(DEFAULT_OUTPUT_FILENAME_OPTIONS).toEqual(['date', 'subject']);
+        const isValidFilenameOption: FilenameOption[] = DEFAULT_OUTPUT_FILENAME_OPTIONS;
         expect(isValidFilenameOption.every(opt => ['date', 'time', 'subject'].includes(opt))).toBe(true);
     });
 

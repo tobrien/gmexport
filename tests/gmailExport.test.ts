@@ -100,7 +100,7 @@ describe('gmailExport', () => {
     const mockRunConfig: RunConfig = {
         outputDirectory: '/export',
         outputStructure: 'year' as OutputStructure,
-        filenameOptions: ['date' as FilenameOption],
+        outputFilenameOptions: ['date' as FilenameOption],
         credentialsFile: 'credentials.json',
         tokenFile: 'token.json',
         apiScopes: ['scope1'],

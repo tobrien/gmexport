@@ -61,7 +61,7 @@ describe('Gmail Query Module', () => {
         const baseConfig: RunConfig = {
             outputDirectory: '/output',
             outputStructure: 'year' as OutputStructure,
-            filenameOptions: ['date' as FilenameOption, 'subject' as FilenameOption],
+            outputFilenameOptions: ['date' as FilenameOption, 'subject' as FilenameOption],
             credentialsFile: 'credentials.json',
             tokenFile: 'token.json',
             apiScopes: ['https://www.googleapis.com/auth/gmail.readonly'],

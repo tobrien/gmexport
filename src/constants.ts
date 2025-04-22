@@ -24,7 +24,7 @@ export const DEFAULT_CREDENTIALS_FILE = './credentials.json';
 export const DEFAULT_TOKEN_FILE = './token.json';
 export const DEFAULT_SCOPES = ['https://www.googleapis.com/auth/gmail.readonly'];
 export const DEFAULT_OUTPUT_STRUCTURE = 'month' as OutputStructure;
-export const DEFAULT_FILENAME_OPTIONS = ['date', 'subject'] as FilenameOption[];
+export const DEFAULT_OUTPUT_FILENAME_OPTIONS = ['date', 'subject'] as FilenameOption[];
 export const DEFAULT_VERBOSE = false;
 export const DEFAULT_DRY_RUN = false;
 export const DEFAULT_CURRENT_MONTH = false;
@@ -48,4 +48,4 @@ export const ALLOWED_SCOPES = [
 ];
 
 export const ALLOWED_OUTPUT_STRUCTURES = ['none', 'year', 'month', 'day'] as OutputStructure[];
-export const ALLOWED_FILENAME_OPTIONS = ['date', 'time', 'subject'] as FilenameOption[];
+export const ALLOWED_OUTPUT_FILENAME_OPTIONS = ['date', 'time', 'subject'] as FilenameOption[];
