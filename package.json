@@ -1,6 +1,6 @@
 {
     "name": "@tobrien/gmexport",
-    "version": "0.1.4",
+    "version": "0.1.6",
     "description": "Export GMail",
     "main": "dist/main.js",
     "type": "module",
@@ -11,7 +11,7 @@
         "type": "git",
         "url": "git+https://github.com/tobrien/gmexport.git"
     },
-    "packageManager": "pnpm@10.9.0",
+    "packageManager": "pnpm@10.10.0",
     "scripts": {
         "build": "vite build",
         "start": "node dist/main.js",
