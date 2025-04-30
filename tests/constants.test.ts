@@ -1,4 +1,4 @@
-import { FilenameOption, OutputStructure } from '@tobrien/cabazooka';
+import { FilenameOption, FilesystemStructure } from '@tobrien/cabazooka';
 import {
     VERSION,
     PROGRAM_NAME,
@@ -72,7 +72,7 @@ describe('constants', () => {
 
     it('should have correct default output structure', () => {
         expect(DEFAULT_OUTPUT_STRUCTURE).toBe('month');
-        const isValidOutputStructure: OutputStructure = DEFAULT_OUTPUT_STRUCTURE;
+        const isValidOutputStructure: FilesystemStructure = DEFAULT_OUTPUT_STRUCTURE;
         expect(['year', 'month', 'day']).toContain(isValidOutputStructure);
     });
 
