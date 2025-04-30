@@ -1,4 +1,5 @@
-import { FilenameOption, OutputStructure } from "@tobrien/cabazooka";
+import { FilenameOption, FilesystemStructure } from "@tobrien/cabazooka";
+import { GMExportConfig } from "types";
 
 export const VERSION = '__VERSION__ (__GIT_BRANCH__/__GIT_COMMIT__ __GIT_TAGS__ __GIT_COMMIT_DATE__) __SYSTEM_INFO__';
 export const PROGRAM_NAME = 'gmexport';
@@ -23,7 +24,7 @@ export const DEFAULT_TIMEZONE = 'Etc/UTC';
 export const DEFAULT_CREDENTIALS_FILE = './credentials.json';
 export const DEFAULT_TOKEN_FILE = './token.json';
 export const DEFAULT_SCOPES = ['https://www.googleapis.com/auth/gmail.readonly'];
-export const DEFAULT_OUTPUT_STRUCTURE = 'month' as OutputStructure;
+export const DEFAULT_OUTPUT_STRUCTURE = 'month' as FilesystemStructure;
 export const DEFAULT_OUTPUT_FILENAME_OPTIONS = ['date', 'subject'] as FilenameOption[];
 export const DEFAULT_VERBOSE = false;
 export const DEFAULT_DRY_RUN = false;
@@ -47,5 +48,22 @@ export const ALLOWED_SCOPES = [
     'https://mail.google.com/'
 ];
 
-export const ALLOWED_OUTPUT_STRUCTURES = ['none', 'year', 'month', 'day'] as OutputStructure[];
+export const ALLOWED_OUTPUT_STRUCTURES = ['none', 'year', 'month', 'day'] as FilesystemStructure[];
 export const ALLOWED_OUTPUT_FILENAME_OPTIONS = ['date', 'time', 'subject'] as FilenameOption[];
+
+export const DEFAULT_CONFIG_DIR = `./.${PROGRAM_NAME}`;
+
+export const GMEXPORT_DEFAULTS: GMExportConfig = {
+    dryRun: DEFAULT_DRY_RUN,
+    verbose: DEFAULT_VERBOSE,
+    configDirectory: DEFAULT_CONFIG_DIR,
+    credentialsFile: DEFAULT_CREDENTIALS_FILE,
+    tokenFile: DEFAULT_TOKEN_FILE,
+    apiScopes: DEFAULT_SCOPES,
+    timezone: DEFAULT_TIMEZONE,
+    config: DEFAULT_CONFIG_DIR,
+    filters: {
+        exclude: {},
+        include: {},
+    },
+};

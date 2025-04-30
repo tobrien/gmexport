@@ -17,6 +17,7 @@ export interface Utility {
     isReadable: (path: string) => Promise<boolean>;
     isWritable: (path: string) => Promise<boolean>;
     isFileReadable: (path: string) => Promise<boolean>;
+    isDirectoryReadable: (path: string) => Promise<boolean>;
     isDirectoryWritable: (path: string) => Promise<boolean>;
     createDirectory: (path: string) => Promise<void>;
     readFile: (path: string, encoding: string) => Promise<string>;
@@ -84,6 +85,10 @@ export const create = (params: { log?: (message: string, ...args: any[]) => void
         return await exists(path) && await isDirectory(path) && await isWritable(path);
     }
 
+    const isDirectoryReadable = async (path: string): Promise<boolean> => {
+        return await exists(path) && await isDirectory(path) && await isReadable(path);
+    }
+
     const createDirectory = async (path: string): Promise<void> => {
         try {
             await fs.promises.mkdir(path, { recursive: true });
@@ -100,5 +105,5 @@ export const create = (params: { log?: (message: string, ...args: any[]) => void
         await fs.promises.writeFile(path, data, { encoding: encoding as BufferEncoding });
     }
 
-    return { exists, isDirectory, isFile, isReadable, isWritable, isFileReadable, isDirectoryWritable, createDirectory, readFile, writeFile };
+    return { exists, isDirectory, isFile, isReadable, isWritable, isFileReadable, isDirectoryReadable, isDirectoryWritable, createDirectory, readFile, writeFile };
 }

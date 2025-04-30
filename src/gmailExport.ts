@@ -8,8 +8,7 @@ import MessageWrapper from './gmail/MessageWrapper';
 import { createQuery } from './gmail/query';
 import { Instance } from './gmailExport.d';
 import { getLogger } from './logging';
-import * as Run from './run';
-import { DateRange } from './run';
+import { DateRange, GMExportConfig } from 'types';
 import * as Dates from './util/dates';
 import * as Storage from './util/storage';
 
@@ -61,9 +60,9 @@ function foldHeaderLine(name: string, value: string): string {
     return result;
 }
 
-export const create = (runConfig: Run.Config, api: GmailApiInstance, operator: CabazookaOperator): Instance => {
+export const create = (gmExportConfig: GMExportConfig, api: GmailApiInstance, operator: CabazookaOperator): Instance => {
     const logger = getLogger();
-    const filter = Filter.create(runConfig);
+    const filter = Filter.create(gmExportConfig);
     const userId = 'me';
     const storage = Storage.create({});
 
@@ -105,7 +104,7 @@ export const create = (runConfig: Run.Config, api: GmailApiInstance, operator: C
                 messageId!,
                 wrappedMessage.date,
                 wrappedMessage.subject || 'No Subject',
-                runConfig.timezone,
+                gmExportConfig.timezone,
             );
 
             // Skip if file already exists
@@ -144,7 +143,7 @@ export const create = (runConfig: Run.Config, api: GmailApiInstance, operator: C
 
     async function exportEmails(dateRange: DateRange): Promise<void> {
         try {
-            const query = createQuery(dateRange, runConfig, runConfig.timezone);
+            const query = createQuery(dateRange, gmExportConfig, gmExportConfig.timezone);
             await api.listMessages({ userId, q: query }, async (messageBatch) => {
                 logger.info('Processing %d messages', messageBatch.length);
                 // Process all messages in the batch concurrently
@@ -153,7 +152,7 @@ export const create = (runConfig: Run.Config, api: GmailApiInstance, operator: C
 
             printExportSummary();
 
-            if (runConfig.dryRun) {
+            if (gmExportConfig.dryRun) {
                 logger.info('This was a dry run. No files were actually saved.');
             }
         } catch (error: any) {
@@ -169,7 +168,7 @@ export const create = (runConfig: Run.Config, api: GmailApiInstance, operator: C
         logger.info(`\tSkipped (already exists): ${skippedCount}`);
         logger.info(`\tFiltered out: ${filteredCount}`);
         logger.info(`\tErrors: ${errorCount}`);
-        logger.info(`\tDry run mode: ${runConfig.dryRun ? 'Yes' : 'No'}`);
+        logger.info(`\tDry run mode: ${gmExportConfig.dryRun ? 'Yes' : 'No'}`);
     }
 
     return {

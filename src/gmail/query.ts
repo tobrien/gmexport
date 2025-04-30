@@ -1,9 +1,9 @@
 import { getLogger } from '../logging';
-import * as Run from '../run';
 import * as Dates from '../util/dates';
 import { DATE_FORMAT_YEAR_MONTH_DAY_SLASH } from '../constants';
+import { DateRange, GMExportConfig } from 'types';
 
-export function createQuery(dateRange: Run.DateRange, config: Run.Config, timezone: string): string {
+export function createQuery(dateRange: DateRange, config: GMExportConfig, timezone: string): string {
     const dates = Dates.create({ timezone });
     const afterDate = dates.format(dateRange.start, DATE_FORMAT_YEAR_MONTH_DAY_SLASH);
 

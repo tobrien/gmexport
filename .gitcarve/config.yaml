@@ -1,0 +1,10 @@
+verbose: false
+model: gpt-4o
+contextDirectories:
+  - .gitcarve/context
+commit:
+  cached: true
+  sendit: true
+release:
+  from: main
+  to: HEAD
