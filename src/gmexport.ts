@@ -7,6 +7,7 @@ import { Instance as GmailExportInstance } from './gmailExport.d';
 import { getLogger, setLogLevel } from './logging';
 import { connect, ExitError, exportEmails } from './phases';
 import { DateRange, GMExportConfig, GMExportConfigSchema } from './types';
+import { z } from 'zod';
 
 export async function main() {
 
@@ -25,13 +26,21 @@ export async function main() {
             outputFilenameOptions: ALLOWED_OUTPUT_FILENAME_OPTIONS,
         },
         features: ['output', 'structured-output'],
+        addDefaults: false,
     });
+
+    const mergedShapeProperties = {
+        ...GMExportConfigSchema.partial().shape,
+        ...Cabazooka.ConfigSchema.partial().shape
+    };
+
+    const combinedShape = z.object(mergedShapeProperties);
 
     const givemetheconfig: GiveMeTheConfig.Givemetheconfig<any> = GiveMeTheConfig.create({
         defaults: {
             configDirectory: DEFAULT_CONFIG_DIR,
         },
-        configShape: GMExportConfigSchema.partial().shape,
+        configShape: combinedShape.shape,
     });
 
 

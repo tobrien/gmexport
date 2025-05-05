@@ -47,6 +47,9 @@ export const configure = async (cabazooka: Cabazooka, givemetheconfig: GiveMeThe
         apiScopes: cliCombinedArgs.apiScopes,
         verbose: cliCombinedArgs.verbose,
         dryRun: cliCombinedArgs.dryRun,
+        outputDirectory: cliCombinedArgs.outputDirectory,
+        outputStructure: cliCombinedArgs.outputStructure,
+        outputFilenameOptions: cliCombinedArgs.outputFilenameOptions,
     } as Args;
 
     const cliJobArgs: JobArgs = {
@@ -63,7 +66,7 @@ export const configure = async (cabazooka: Cabazooka, givemetheconfig: GiveMeThe
     // Read the Raw values from the Cabazooka Command Line Arguments
     const cabazookaValues = await cabazooka.read(cliCombinedArgs);
 
-    const gmexportConfig: GMExportConfig = {
+    let gmexportConfig: GMExportConfig = {
         ...GMEXPORT_DEFAULTS,
         ...fileValues,   // Apply file values (overwrites defaults), ensure object
         ...cabazookaValues,              // Apply all CLI args last (highest precedence for all keys, including Cabazooka's)
@@ -75,6 +78,9 @@ export const configure = async (cabazooka: Cabazooka, givemetheconfig: GiveMeThe
         ...clean(cliJobArgs),
     } as JobConfig;
     await validateJobConfig(jobConfig);
+
+
+    gmexportConfig = cabazooka.applyDefaults(gmexportConfig) as GMExportConfig;
 
     const dateRange = createDateRange({
         timezone: gmexportConfig.timezone!,
